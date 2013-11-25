@@ -43,6 +43,8 @@ DistortionTest::~DistortionTest()
 {
 	delete glwidget;
 	delete distortionGroup;
+	delete filteringGroup;
+	delete patternGroup;
 }
 
 void DistortionTest::about()

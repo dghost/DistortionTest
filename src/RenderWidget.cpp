@@ -1,15 +1,34 @@
 #include "RenderWidget.h"
 
+QGLFormat desiredFormat()
+{
+    QGLFormat fmt;
+    fmt.setSwapInterval(1);
+    return fmt;
+}
+
 RenderWidget::RenderWidget(QWidget *parent)
-	: QGLWidget(parent)
+	: QGLWidget(desiredFormat(),parent)
 {
 //	QWidget::setFixedSize(QSize(1280,800));
-
+	connect(&timer, SIGNAL(timeout()), this, SLOT(updateGL()));
+    if(format().swapInterval() == -1)
+    {
+        // V_blank synchronization not available (tearing likely to happen)
+        qDebug("Swap Buffers at v_blank not available: refresh at approx 60fps.");
+        timer.setInterval(17);
+    }
+    else
+    {
+        // V_blank synchronization available
+        timer.setInterval(0);
+    }
+    timer.start();
 }
 
 RenderWidget::~RenderWidget()
 {
-
+	delete backBuffer;
 }
 
 /*
@@ -112,22 +131,16 @@ void RenderWidget::setShader(unsigned int shader_number)
 {
 	if (shader_number >= 0 && shader_number < NUM_DISTORTION_SHADERS)
 		shaderNum = shader_number;
-
-	updateGL();
 }
 
 void RenderWidget::setTextureFilter(unsigned int filter_mode)
 {
 	if (filter_mode >= 0 && filter_mode < NUM_FILTER_MODES)
 		filterMode = filter_mode;
-
-	updateGL();
 }
 
 void RenderWidget::setPattern(unsigned int pattern)
 {
 	if (pattern >= 0 && pattern < NUM_PATTERNS)
 		patternMode = pattern;
-
-	updateGL();
 }

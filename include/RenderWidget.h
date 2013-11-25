@@ -5,6 +5,7 @@
 #include <QGLWidget>
 #include <QGLShaderProgram>
 #include <QGLFramebufferObject>
+#include <QTimer>
 
 enum {
 	DISTORTION_NONE,
@@ -50,6 +51,7 @@ private:
 	unsigned int shaderNum;
 	unsigned int filterMode;
 	unsigned int patternMode;
+    QTimer timer;
 
 signals:
 	void sizeChanged(QSize newSize);
