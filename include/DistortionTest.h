@@ -19,7 +19,7 @@ public:
 protected:
 	RenderWidget *glwidget;
 private:
-	Ui::OVRImageQualityClass ui;
+	Ui::DistortionTestClass ui;
 	QActionGroup *distortionGroup;
 	QActionGroup *filteringGroup;
 	QActionGroup *patternGroup;
@@ -29,6 +29,7 @@ private:
 		void triggeredDistortion(QAction *action);
 		void triggeredFiltering(QAction *action);
 		void triggeredPattern(QAction *action);
+		void reloadShaders();
 };
 
 #endif // OVRIMAGEQUALITY_H

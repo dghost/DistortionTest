@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>OVRImageQualityClass</class>
- <widget class="QMainWindow" name="OVRImageQualityClass">
+ <class>DistortionTestClass</class>
+ <widget class="QMainWindow" name="DistortionTestClass">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -75,12 +75,14 @@
      <property name="title">
       <string>Test Pattern</string>
      </property>
-     <addaction name="actionPixel_Grid"/>
+     <addaction name="actionCheckered"/>
+     <addaction name="actionLines"/>
      <addaction name="actionGradient"/>
     </widget>
     <addaction name="menuDistortion_Shader"/>
     <addaction name="menuFiltering_Mode"/>
     <addaction name="menuTest_Pattern"/>
+    <addaction name="actionReload_Shaders"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuOptions"/>
@@ -88,7 +90,7 @@
   <widget class="StatusWidget" name="statusBar"/>
   <action name="actionNone">
    <property name="checkable">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="checked">
     <bool>false</bool>
@@ -99,7 +101,7 @@
   </action>
   <action name="actionStandard">
    <property name="checkable">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="text">
     <string>Standard</string>
@@ -107,7 +109,7 @@
   </action>
   <action name="actionGL_NEAREST">
    <property name="checkable">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="checked">
     <bool>false</bool>
@@ -118,7 +120,7 @@
   </action>
   <action name="actionGL_LINEAR">
    <property name="checkable">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="text">
     <string>GL_LINEAR</string>
@@ -134,20 +136,36 @@
     <string>Exit</string>
    </property>
   </action>
-  <action name="actionPixel_Grid">
+  <action name="actionCheckered">
    <property name="checkable">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="text">
-    <string>Pixel Grid</string>
+    <string>Checkered</string>
    </property>
   </action>
   <action name="actionGradient">
    <property name="checkable">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="text">
     <string>Gradient</string>
+   </property>
+  </action>
+  <action name="actionLines">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Lines</string>
+   </property>
+  </action>
+  <action name="actionReload_Shaders">
+   <property name="text">
+    <string>Reload Shaders</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
    </property>
   </action>
  </widget>
@@ -166,7 +184,7 @@
   <connection>
    <sender>actionExit</sender>
    <signal>triggered()</signal>
-   <receiver>OVRImageQualityClass</receiver>
+   <receiver>DistortionTestClass</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -182,8 +200,24 @@
   <connection>
    <sender>actionAbout</sender>
    <signal>triggered()</signal>
-   <receiver>OVRImageQualityClass</receiver>
+   <receiver>DistortionTestClass</receiver>
    <slot>about()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>639</x>
+     <y>409</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionReload_Shaders</sender>
+   <signal>triggered()</signal>
+   <receiver>DistortionTestClass</receiver>
+   <slot>reloadShaders()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -198,5 +232,6 @@
  </connections>
  <slots>
   <slot>about()</slot>
+  <slot>reloadShaders()</slot>
  </slots>
 </ui>

@@ -21,6 +21,7 @@ enum {
 
 enum {
 	PATTERN_GRID,
+	PATTERN_LINES,
 	PATTERN_GRADIENT,
 	NUM_PATTERNS
 };
@@ -60,6 +61,7 @@ signals:
 		void setShader(unsigned int shader_number);
 		void setTextureFilter(unsigned int filter_mode);
 		void setPattern(unsigned int pattern);
+		void reloadShaders(void);
 };
 
 #endif // OVRRENDERWIDGET_H

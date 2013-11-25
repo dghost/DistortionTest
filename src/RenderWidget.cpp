@@ -47,21 +47,31 @@ QSize RenderWidget::sizeHint() const
     return QSize(1280, 800);
 }
 */
-void RenderWidget::initializeGL()
+
+
+void RenderWidget::reloadShaders(void)
 {
-	// Set up the rendering context, define display lists etc.:
-	glClearColor( 0.0, 0.0, 0.0, 1.0 );
-	glEnable(GL_DEPTH_TEST);
+	makeCurrent();
+	for (int i = 0; i < NUM_PATTERNS ; i++)
+		patternShader[i].removeAllShaders();
 
 	patternShader[PATTERN_GRID].addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
 	patternShader[PATTERN_GRID].addShaderFromSourceFile (QGLShader::Vertex,"shaders\\empty.shdr");
 	patternShader[PATTERN_GRID].addShaderFromSourceFile (QGLShader::Fragment, "shaders\\checker.frag");
 	patternShader[PATTERN_GRID].link();
 
+	patternShader[PATTERN_LINES].addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
+	patternShader[PATTERN_LINES].addShaderFromSourceFile (QGLShader::Vertex,"shaders\\empty.shdr");
+	patternShader[PATTERN_LINES].addShaderFromSourceFile (QGLShader::Fragment, "shaders\\lines.frag");
+	patternShader[PATTERN_LINES].link();
+
 	patternShader[PATTERN_GRADIENT].addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
 	patternShader[PATTERN_GRADIENT].addShaderFromSourceFile (QGLShader::Vertex,"shaders\\empty.shdr");
 	patternShader[PATTERN_GRADIENT].addShaderFromSourceFile (QGLShader::Fragment, "shaders\\gradient.frag");
 	patternShader[PATTERN_GRADIENT].link();
+
+	for (int i = 0; i < NUM_DISTORTION_SHADERS ; i++)
+		distortionShader[i].removeAllShaders();
 
 	distortionShader[DISTORTION_NONE].addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
 	distortionShader[DISTORTION_NONE].addShaderFromSourceFile (QGLShader::Vertex,"shaders\\empty.shdr");
@@ -73,11 +83,22 @@ void RenderWidget::initializeGL()
 	distortionShader[DISTORTION_BARREL].addShaderFromSourceFile (QGLShader::Fragment, "shaders\\barrel.frag");
 	distortionShader[DISTORTION_BARREL].link();
 
+	doneCurrent();
+}
+
+void RenderWidget::initializeGL()
+{
+	// Set up the rendering context, define display lists etc.:
+	glClearColor( 0.0, 0.0, 0.0, 1.0 );
+	glEnable(GL_DEPTH_TEST);
+
+
 	shaderNum = DISTORTION_NONE;
 	filterMode = FILTER_NEAREST;
 	patternMode = PATTERN_GRID;
 
 	backBuffer = new QGLFramebufferObject(1280, 800, QGLFramebufferObject::NoAttachment, GL_TEXTURE_2D);
+	reloadShaders();
 }
 
 void RenderWidget::resizeGL( int w, int h )
