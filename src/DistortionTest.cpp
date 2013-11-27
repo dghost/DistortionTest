@@ -111,3 +111,8 @@ void DistortionTest::reloadShaders(void)
 {
 	glwidget->reloadShaders();
 }
+
+void DistortionTest::saveScreenShot(void)
+{
+	glwidget->saveScreenShot();
+}

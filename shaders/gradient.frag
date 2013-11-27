@@ -1,7 +1,7 @@
 #version 150
 
 uniform vec2 in_ScreenSize = vec2(1280,800);
-uniform vec4 in_ColorBase = vec4(0.0);
+uniform vec4 in_ColorBase = vec4(vec3(0.0),1.0);
 uniform vec4 in_ColorX = vec4(0.0,1.0,0.0,0.0);
 uniform vec4 in_ColorY = vec4(0.0,0.0,1.0,0.0);
 

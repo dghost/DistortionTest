@@ -34,25 +34,36 @@ public:
 	RenderWidget(QWidget *parent);
 	~RenderWidget();
 
+	QSize sizeHint() const;
+
 protected:
 	void initializeGL();
 	void resizeGL( int w, int h );
 	void paintGL();
 	/*
-	QSize sizeHint() const;
 	QSize RenderWidget::minimumSizeHint() const;
 	QSize RenderWidget::maximumSizeHint() const;
 	*/
 private:
+	void generateBuffers();
+	void drawBackBuffer();
+	void drawDistortion();
+	void drawScreen();
+
 	QGLShaderProgram patternShader[NUM_PATTERNS];
 	QGLShaderProgram distortionShader[NUM_DISTORTION_SHADERS];
 
-	QGLFramebufferObject *backBuffer;
+	QGLFramebufferObject *backBuffer, *distortionBuffer, *screenBuffer;
 	GLuint defaultFBO;
 	unsigned int shaderNum;
 	unsigned int filterMode;
 	unsigned int patternMode;
     QTimer timer;
+
+	QSize screenResolution;
+	float distortionToScreenRatio;
+	float backToDistortionRatio;
+	float distortionScale;
 
 signals:
 	void sizeChanged(QSize newSize);
@@ -62,6 +73,7 @@ signals:
 		void setTextureFilter(unsigned int filter_mode);
 		void setPattern(unsigned int pattern);
 		void reloadShaders(void);
+		void saveScreenShot(void);
 };
 
 #endif // OVRRENDERWIDGET_H

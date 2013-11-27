@@ -30,6 +30,7 @@ private:
 		void triggeredFiltering(QAction *action);
 		void triggeredPattern(QAction *action);
 		void reloadShaders();
+		void saveScreenShot();
 };
 
 #endif // OVRIMAGEQUALITY_H

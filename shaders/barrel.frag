@@ -35,7 +35,7 @@ void main(void)
 	tc.y = 1.0 - tc.y;
 	if (!all(equal(clamp(tc, ScreenCenter-vec2(0.25,0.5), ScreenCenter+vec2(0.25,0.5)), tc)))
 	{
-		outColor = vec4(0.0);
+		outColor = vec4(vec3(0.0),1.0);
 	} else {
 		outColor = texture2D(Texture,tc);
 	}

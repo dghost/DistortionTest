@@ -1,4 +1,6 @@
 #include "RenderWidget.h"
+#include <QTime>
+#include <QDir>
 
 QGLFormat desiredFormat()
 {
@@ -24,11 +26,26 @@ RenderWidget::RenderWidget(QWidget *parent)
         timer.setInterval(0);
     }
     timer.start();
+	backBuffer = NULL;
+	distortionBuffer = NULL;
+	screenBuffer = NULL;
+	screenResolution = QSize(1280,800);
+	distortionToScreenRatio = 1.0;
+	backToDistortionRatio = 1.0;
+	distortionScale = 1.0;
+	shaderNum = DISTORTION_NONE;
+	filterMode = FILTER_NEAREST;
+	patternMode = PATTERN_GRID;
 }
 
 RenderWidget::~RenderWidget()
 {
-	delete backBuffer;
+	if (screenBuffer)
+		delete screenBuffer;
+	if (distortionBuffer)
+		delete distortionBuffer;
+	if (backBuffer)
+		delete backBuffer;
 }
 
 /*
@@ -41,12 +58,12 @@ QSize RenderWidget::maximumSizeHint() const
 {
     return QSize(1280, 800);
 }
+*/
 
 QSize RenderWidget::sizeHint() const
 {
     return QSize(1280, 800);
 }
-*/
 
 
 void RenderWidget::reloadShaders(void)
@@ -86,6 +103,39 @@ void RenderWidget::reloadShaders(void)
 	doneCurrent();
 }
 
+void RenderWidget::generateBuffers()
+{
+	if (screenBuffer)
+		delete screenBuffer;
+
+	screenBuffer = new QGLFramebufferObject(screenResolution, QGLFramebufferObject::NoAttachment, GL_TEXTURE_2D,GL_RGBA8);
+	glBindTexture(GL_TEXTURE_2D,screenBuffer->texture());
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D,0);
+
+	if (distortionBuffer)
+		delete distortionBuffer;
+
+	QSize distortionSize = screenResolution * distortionToScreenRatio;	
+	distortionBuffer = new QGLFramebufferObject(distortionSize, QGLFramebufferObject::NoAttachment, GL_TEXTURE_2D,GL_RGBA32F);
+	glBindTexture(GL_TEXTURE_2D,distortionBuffer->texture());
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D,0);
+
+	if (backBuffer)
+		delete backBuffer;
+
+
+	QSize backSize = distortionSize * backToDistortionRatio * distortionScale;
+	backBuffer = new QGLFramebufferObject(backSize, QGLFramebufferObject::NoAttachment, GL_TEXTURE_2D,GL_RGBA32F);
+	setTextureFilter(filterMode);
+
+
+
+
+}
 void RenderWidget::initializeGL()
 {
 	// Set up the rendering context, define display lists etc.:
@@ -93,42 +143,96 @@ void RenderWidget::initializeGL()
 	glEnable(GL_DEPTH_TEST);
 
 
-	shaderNum = DISTORTION_NONE;
-	filterMode = FILTER_NEAREST;
-	patternMode = PATTERN_GRID;
 
-	backBuffer = new QGLFramebufferObject(1280, 800, QGLFramebufferObject::NoAttachment, GL_TEXTURE_2D);
+
+	generateBuffers();
 	reloadShaders();
 }
 
 void RenderWidget::resizeGL( int w, int h )
 {
 
-	glViewport( 0, 0, (GLint)w, (GLint)h );
+//	glViewport( 0, 0, (GLint)w, (GLint)h );
 	emit(sizeChanged(QSize(w,h)));
 
+}
+
+void RenderWidget::drawBackBuffer()
+{
+//	QSize size = screenResolution * distortionToScreenRatio * distortionScale
+	QGLShaderProgram *currentPattern = &patternShader[patternMode];
+	backBuffer->bind();
+	glViewport(0,0,backBuffer->width(),backBuffer->height());
+	glClear(GL_COLOR_BUFFER_BIT);
+	currentPattern->bind();
+	currentPattern->setUniformValue("in_ScreenSize", screenResolution);
+	glDrawArrays(GL_POINTS, 0, 1);
+	glBindTexture(GL_TEXTURE_2D,0);
+	currentPattern->release();
+	backBuffer->release();
+}
+
+void RenderWidget::drawDistortion()
+{
+	QGLShaderProgram *currentDistortion = &distortionShader[shaderNum];
+	distortionBuffer->bind();
+	glViewport(0,0,distortionBuffer->width(),distortionBuffer->height());
+	glClear(GL_COLOR_BUFFER_BIT);
+	glBindTexture(GL_TEXTURE_2D,backBuffer->texture());
+	currentDistortion->bind();
+
+	glDrawArrays(GL_POINTS, 0, 1);
+	glBindTexture(GL_TEXTURE_2D,0);
+	currentDistortion->release();
+	distortionBuffer->release();
+}
+
+void RenderWidget::drawScreen()
+{
+	QGLShaderProgram *currentDistortion = &distortionShader[shaderNum];
+	screenBuffer->bind();
+	glViewport(0,0,screenBuffer->width(),screenBuffer->height());
+	glClear(GL_COLOR_BUFFER_BIT);
+	glBindTexture(GL_TEXTURE_2D,distortionBuffer->texture());
+	distortionShader[DISTORTION_NONE].bind();
+
+	glDrawArrays(GL_POINTS, 0, 1);
+	glBindTexture(GL_TEXTURE_2D,0);
+	distortionShader[DISTORTION_NONE].release();
+	screenBuffer->release();
 }
 
 void RenderWidget::paintGL()
 {
 	// draw the scene:
-	QGLShaderProgram *currentDistortion = &distortionShader[shaderNum];
-	QGLShaderProgram *currentPattern = &patternShader[patternMode];
 
-	backBuffer->bind();
-	glClear(GL_COLOR_BUFFER_BIT);
-	currentPattern->bind();
-	currentPattern->setUniformValue("in_ScreenSize", backBuffer->size());
-	glDrawArrays(GL_POINTS, 0, 1);
-	currentPattern->release();
-
-	backBuffer->release();
-
-
+	drawBackBuffer();
+	drawDistortion();
+	drawScreen();
+	
+	glViewport( 0, 0, this->width(), this->height() );
+	distortionShader[DISTORTION_NONE].bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glBindTexture(GL_TEXTURE_2D,screenBuffer->texture());
+	glDrawArrays(GL_POINTS, 0, 1);
+	glBindTexture(GL_TEXTURE_2D,0);
+	distortionShader[DISTORTION_NONE].release();
+	
+}
+
+
+void RenderWidget::setShader(unsigned int shader_number)
+{
+	if (shader_number < NUM_DISTORTION_SHADERS)
+		shaderNum = shader_number;
+}
+
+void RenderWidget::setTextureFilter(unsigned int filter_mode)
+{
+	if (filter_mode < NUM_FILTER_MODES)
+		filterMode = filter_mode;
+
 	glBindTexture(GL_TEXTURE_2D,backBuffer->texture());
-	currentDistortion->bind();
-//	currentDistortion->setUniformValue("Texture",0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -141,27 +245,29 @@ void RenderWidget::paintGL()
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 
 	}
-
-	glDrawArrays(GL_POINTS, 0, 1);
 	glBindTexture(GL_TEXTURE_2D,0);
-	currentDistortion->release();
-}
-
-
-void RenderWidget::setShader(unsigned int shader_number)
-{
-	if (shader_number >= 0 && shader_number < NUM_DISTORTION_SHADERS)
-		shaderNum = shader_number;
-}
-
-void RenderWidget::setTextureFilter(unsigned int filter_mode)
-{
-	if (filter_mode >= 0 && filter_mode < NUM_FILTER_MODES)
-		filterMode = filter_mode;
 }
 
 void RenderWidget::setPattern(unsigned int pattern)
 {
-	if (pattern >= 0 && pattern < NUM_PATTERNS)
+	if (pattern < NUM_PATTERNS)
 		patternMode = pattern;
+}
+
+void RenderWidget::saveScreenShot(void)
+{
+	makeCurrent();
+	QImage temp = screenBuffer->toImage();
+	QTime tempTime = QTime::currentTime();
+	QString time = tempTime.toString("hh-mm-ss-zzz");
+	QString filename = QString("screenshots/distortion-%1x%2-").arg(screenResolution.width()).arg(screenResolution.height()).append(time).append(".png");
+	QDir dir("screenshots");
+	if(!dir.exists())
+	{
+	dir = QDir::current();
+	dir.mkdir("screenshots");
+	}
+	if (!temp.save(filename,"PNG"))
+		qDebug() << "Error saving screenshot '" << filename <<"'\n";
+	doneCurrent();
 }

@@ -2,7 +2,7 @@
 
 
 uniform vec2 in_ScreenSize = vec2(1280,800);
-uniform vec4 in_ColorBase = vec4(0.0);
+uniform vec4 in_ColorBase = vec4(vec3(0.0),1.0);
 uniform vec4 in_ColorX = vec4(1.0,0.0,0.0,0.0);
 uniform vec4 in_ColorY = vec4(0.0,0.0,1.0,0.0);
 uniform float in_Size = 1;
@@ -18,6 +18,6 @@ void main(void)
 
 	// add lines together
 	outColor = in_ColorBase;
-	outColor += (color.x == 0) ? in_ColorX : vec4(0.0);
-	outColor += (color.y == 0) ? in_ColorY : vec4(0.0);
+	outColor += (color.x == 0) ? in_ColorX : vec4(vec3(0.0),1.0);
+	outColor += (color.y == 0) ? in_ColorY : vec4(vec3(0.0),1.0);
 }
