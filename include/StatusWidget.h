@@ -13,12 +13,15 @@ public:
 	~StatusWidget();
 
 public slots:
-	void setSize(QSize temp);
-
+	void setScreenSize(QSize temp);
+	void setDistortionSize(QSize temp);
+	void setSourceSize(QSize temp);
 
 private:
 	QSize statusSize;
-	QLabel resolution;
+	QLabel screenResolution;
+	QLabel distortionResolution;
+	QLabel sourceResolution;
 };
 
 #endif // OVRSTATUSBAR_H

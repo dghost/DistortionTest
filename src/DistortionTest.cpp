@@ -10,7 +10,10 @@ DistortionTest::DistortionTest(QWidget *parent)
 
 	glwidget = new RenderWidget(this);
 	glwidget->setFixedSize(1280,800);
-	QObject:connect(glwidget,SIGNAL(sizeChanged(QSize)),ui.statusBar,SLOT(setSize(QSize)));
+	QObject::connect(glwidget,SIGNAL(sizeScreenChanged(QSize)),ui.statusBar,SLOT(setScreenSize(QSize)));
+	QObject::connect(glwidget,SIGNAL(sizeSourceChanged(QSize)),ui.statusBar,SLOT(setSourceSize(QSize)));
+	QObject::connect(glwidget,SIGNAL(sizeDistortionChanged(QSize)),ui.statusBar,SLOT(setDistortionSize(QSize)));
+
 	ui.mainLayout->addWidget(glwidget);
 	ui.mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 

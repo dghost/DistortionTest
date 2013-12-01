@@ -132,6 +132,10 @@ void RenderWidget::generateBuffers()
 	backBuffer = new QGLFramebufferObject(backSize, QGLFramebufferObject::NoAttachment, GL_TEXTURE_2D,GL_RGBA32F);
 	setTextureFilter(filterMode);
 
+	emit(sizeDistortionChanged(distortionSize));
+	emit(sizeSourceChanged(backSize));
+
+	emit(sizeScreenChanged(screenResolution));
 
 
 
@@ -153,7 +157,7 @@ void RenderWidget::resizeGL( int w, int h )
 {
 
 //	glViewport( 0, 0, (GLint)w, (GLint)h );
-	emit(sizeChanged(QSize(w,h)));
+//	emit(sizeChanged(QSize(w,h)));
 
 }
 

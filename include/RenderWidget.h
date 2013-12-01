@@ -66,7 +66,10 @@ private:
 	float distortionScale;
 
 signals:
-	void sizeChanged(QSize newSize);
+	void sizeScreenChanged(QSize newSize);
+	void sizeDistortionChanged(QSize newSize);
+	void sizeSourceChanged(QSize newSize);
+
 
 	public slots:
 		void setShader(unsigned int shader_number);
