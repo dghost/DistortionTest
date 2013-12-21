@@ -2,6 +2,8 @@
 #include "RenderWidget.h"
 
 #include <QMessageBox>
+#include <QDir>
+#include <QDateTime>
 
 DistortionTest::DistortionTest(QWidget *parent)
 	: QMainWindow(parent)
@@ -18,14 +20,14 @@ DistortionTest::DistortionTest(QWidget *parent)
 	ui.mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
 	this->setFixedSize(glwidget->width(),glwidget->height() + ui.statusBar->height());
-	
+
 	/* set up shader selection menu */
 	distortionGroup = new QActionGroup(this);
 	distortionGroup->addAction(ui.actionNone);
 	distortionGroup->addAction(ui.actionStandard);
 
 	connect(distortionGroup,SIGNAL(triggered(QAction*)),this,SLOT(triggeredDistortion(QAction*)));
-	
+
 	ui.actionNone->setCheckable(true);
 	ui.actionStandard->setCheckable(true);
 	ui.actionNone->setChecked(true);
@@ -36,7 +38,7 @@ DistortionTest::DistortionTest(QWidget *parent)
 	filteringGroup->addAction(ui.actionGL_NEAREST);
 	filteringGroup->addAction(ui.actionGL_LINEAR);
 	connect(filteringGroup,SIGNAL(triggered(QAction*)),this,SLOT(triggeredFiltering(QAction*)));
-	
+
 	ui.actionGL_NEAREST->setCheckable(true);
 	ui.actionGL_LINEAR->setCheckable(true);
 	ui.actionGL_NEAREST->setChecked(true);
@@ -48,7 +50,7 @@ DistortionTest::DistortionTest(QWidget *parent)
 	patternGroup->addAction(ui.actionLines);
 	patternGroup->addAction(ui.actionGradient);
 	connect(patternGroup,SIGNAL(triggered(QAction*)),this,SLOT(triggeredPattern(QAction*)));
-	
+
 	ui.actionCheckered->setCheckable(true);
 	ui.actionLines->setCheckable(true);
 	ui.actionGradient->setCheckable(true);
@@ -70,8 +72,8 @@ void DistortionTest::about()
 	msgBox.setTextFormat(Qt::RichText);
 	msgBox.setText("Oculus Rift Distortion Test<br>Version 0.2<br><br>Luke Groeninger<br><a href='http://dghost.net'>http://dghost.net</a>");
 	msgBox.setStandardButtons(QMessageBox::Ok);
-    msgBox.setDefaultButton(QMessageBox::Ok);
-    int ret = msgBox.exec();
+	msgBox.setDefaultButton(QMessageBox::Ok);
+	int ret = msgBox.exec();
 }
 
 void DistortionTest::triggeredDistortion(QAction *action)
@@ -117,5 +119,17 @@ void DistortionTest::reloadShaders(void)
 
 void DistortionTest::saveScreenShot(void)
 {
-	glwidget->saveScreenShot();
+	QImage temp = glwidget->saveScreenShot();
+	QDateTime tempTime = QDateTime::currentDateTime();
+	QString time = tempTime.toString("yyyyMMdd-hh-mm-ss-zzz");
+	QString filename = QString("screenshots/%1-%2x%3").arg(time).arg(temp.width()).arg(temp.height()).append(".png");
+	QDir dir("screenshots");
+	if(!dir.exists())
+	{
+		dir = QDir::current();
+		dir.mkdir("screenshots");
+	}
+	if (!temp.save(filename,"PNG"))
+		qDebug() << "Error saving screenshot '" << filename <<"'\n";
+
 }

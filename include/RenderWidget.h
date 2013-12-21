@@ -6,6 +6,7 @@
 #include <QGLShaderProgram>
 #include <QGLFramebufferObject>
 #include <QTimer>
+#include <QImage>
 
 enum {
 	DISTORTION_NONE,
@@ -35,11 +36,12 @@ public:
 	~RenderWidget();
 
 	QSize sizeHint() const;
-
+	QImage saveScreenShot(void);
 protected:
 	void initializeGL();
 	void resizeGL( int w, int h );
 	void paintGL();
+
 	/*
 	QSize RenderWidget::minimumSizeHint() const;
 	QSize RenderWidget::maximumSizeHint() const;
@@ -76,7 +78,7 @@ signals:
 		void setTextureFilter(unsigned int filter_mode);
 		void setPattern(unsigned int pattern);
 		void reloadShaders(void);
-		void saveScreenShot(void);
+
 };
 
 #endif // OVRRENDERWIDGET_H

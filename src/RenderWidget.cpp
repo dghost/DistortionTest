@@ -1,6 +1,4 @@
 #include "RenderWidget.h"
-#include <QTime>
-#include <QDir>
 
 QGLFormat desiredFormat()
 {
@@ -247,9 +245,10 @@ void RenderWidget::setTextureFilter(unsigned int filter_mode)
 	} else {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-
 	}
+
 	glBindTexture(GL_TEXTURE_2D,0);
+
 }
 
 void RenderWidget::setPattern(unsigned int pattern)
@@ -258,20 +257,10 @@ void RenderWidget::setPattern(unsigned int pattern)
 		patternMode = pattern;
 }
 
-void RenderWidget::saveScreenShot(void)
+QImage RenderWidget::saveScreenShot(void)
 {
 	makeCurrent();
 	QImage temp = screenBuffer->toImage();
-	QTime tempTime = QTime::currentTime();
-	QString time = tempTime.toString("hh-mm-ss-zzz");
-	QString filename = QString("screenshots/distortion-%1x%2-").arg(screenResolution.width()).arg(screenResolution.height()).append(time).append(".png");
-	QDir dir("screenshots");
-	if(!dir.exists())
-	{
-	dir = QDir::current();
-	dir.mkdir("screenshots");
-	}
-	if (!temp.save(filename,"PNG"))
-		qDebug() << "Error saving screenshot '" << filename <<"'\n";
 	doneCurrent();
+	return temp;
 }
