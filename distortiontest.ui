@@ -75,6 +75,7 @@
      <property name="title">
       <string>Test Pattern</string>
      </property>
+     <addaction name="actionSolid"/>
      <addaction name="actionCheckered"/>
      <addaction name="actionLines"/>
      <addaction name="actionGradient"/>
@@ -82,7 +83,6 @@
     <addaction name="menuDistortion_Shader"/>
     <addaction name="menuFiltering_Mode"/>
     <addaction name="menuTest_Pattern"/>
-    <addaction name="actionReload_Shaders"/>
     <addaction name="actionScreen_Shot"/>
    </widget>
    <addaction name="menuFile"/>
@@ -161,20 +161,17 @@
     <string>Lines</string>
    </property>
   </action>
-  <action name="actionReload_Shaders">
-   <property name="text">
-    <string>Reload Shaders</string>
-   </property>
-   <property name="shortcut">
-    <string>F5</string>
-   </property>
-  </action>
   <action name="actionScreen_Shot">
    <property name="text">
     <string>Save Screen Shot</string>
    </property>
    <property name="shortcut">
     <string>F6</string>
+   </property>
+  </action>
+  <action name="actionSolid">
+   <property name="text">
+    <string>Solid</string>
    </property>
   </action>
  </widget>
@@ -223,22 +220,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionReload_Shaders</sender>
-   <signal>triggered()</signal>
-   <receiver>DistortionTestClass</receiver>
-   <slot>reloadShaders()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>639</x>
-     <y>409</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>actionScreen_Shot</sender>
    <signal>triggered()</signal>
    <receiver>DistortionTestClass</receiver>
@@ -257,7 +238,6 @@
  </connections>
  <slots>
   <slot>about()</slot>
-  <slot>reloadShaders()</slot>
   <slot>saveScreenShot()</slot>
  </slots>
 </ui>

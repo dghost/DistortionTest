@@ -14,13 +14,6 @@ enum {
 	NUM_FILTER_MODES
 };
 
-enum {
-	PATTERN_GRID,
-	PATTERN_LINES,
-	PATTERN_GRADIENT,
-	NUM_PATTERNS
-};
-
 class RenderWidget : public QGLWidget
 {
 	Q_OBJECT
@@ -46,14 +39,13 @@ private:
 	void drawDistortion();
 	void drawScreen();
 
-	QGLShaderProgram patternShader[NUM_PATTERNS];
+	QGLShaderProgram patternShader;
 	QGLShaderProgram distortionShader;
 	QGLShaderProgram screenShader;
 
 	QGLFramebufferObject *backBuffer, *distortionBuffer, *screenBuffer;
 	GLuint defaultFBO;
 	unsigned int filterMode;
-	unsigned int patternMode;
     QTimer timer;
 
 	QSize screenResolution;
@@ -69,8 +61,7 @@ signals:
 
 	public slots:
 		void setTextureFilter(unsigned int filter_mode);
-		void setPattern(unsigned int pattern);
-		void reloadShaders(void);
+		void setSourceShader(QString source);
 		void setDistortionShader(QString source);
 		void setScreenShader(QString source);
 };

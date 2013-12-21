@@ -29,7 +29,6 @@ private:
 		void triggeredDistortion(QAction *action);
 		void triggeredFiltering(QAction *action);
 		void triggeredPattern(QAction *action);
-		void reloadShaders();
 		void saveScreenShot();
 };
 

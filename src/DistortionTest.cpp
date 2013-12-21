@@ -46,15 +46,17 @@ DistortionTest::DistortionTest(QWidget *parent)
 	/* set up pattern selection menu */
 
 	patternGroup = new QActionGroup(this);
+	patternGroup->addAction(ui.actionSolid);
 	patternGroup->addAction(ui.actionCheckered);
 	patternGroup->addAction(ui.actionLines);
 	patternGroup->addAction(ui.actionGradient);
 	connect(patternGroup,SIGNAL(triggered(QAction*)),this,SLOT(triggeredPattern(QAction*)));
 
+	ui.actionSolid->setCheckable(true);
 	ui.actionCheckered->setCheckable(true);
 	ui.actionLines->setCheckable(true);
 	ui.actionGradient->setCheckable(true);
-	ui.actionCheckered->setChecked(true);
+	ui.actionSolid->setChecked(true);
 }
 
 DistortionTest::~DistortionTest()
@@ -114,21 +116,39 @@ void DistortionTest::triggeredFiltering(QAction *action)
 
 void DistortionTest::triggeredPattern(QAction *action)
 {
+	QString sourceFile;
 	if (action == ui.actionCheckered)
 	{
-		glwidget->setPattern(PATTERN_GRID);
+		sourceFile = "shaders/checker.frag";
 	} else if (action == ui.actionLines)
 	{
-		glwidget->setPattern(PATTERN_LINES);
+		sourceFile = "shaders/lines.frag";
 	} else if (action == ui.actionGradient)
 	{
-		glwidget->setPattern(PATTERN_GRADIENT);
+		sourceFile = "shaders/gradient.frag";
 	}
-}
 
-void DistortionTest::reloadShaders(void)
-{
-	glwidget->reloadShaders();
+	QString shader;
+
+	if (!sourceFile.isEmpty())
+	{
+		QFile file(sourceFile);
+		if(!file.open(QIODevice::ReadOnly)) {
+			QMessageBox::information(0, "error", file.errorString());
+		}
+
+		QTextStream in(&file);
+
+		while(!in.atEnd()) {
+			shader.append( in.readLine());
+			shader.append("\n");
+		}
+		//		QMessageBox::information(0, "info", shader);
+		file.close();
+	}
+	glwidget->setSourceShader(shader);
+
+
 }
 
 void DistortionTest::saveScreenShot(void)
