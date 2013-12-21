@@ -9,12 +9,6 @@
 #include <QImage>
 
 enum {
-	DISTORTION_NONE,
-	DISTORTION_BARREL,
-	NUM_DISTORTION_SHADERS
-};
-
-enum {
 	FILTER_NEAREST,
 	FILTER_BILINEAR,
 	NUM_FILTER_MODES
@@ -53,11 +47,11 @@ private:
 	void drawScreen();
 
 	QGLShaderProgram patternShader[NUM_PATTERNS];
-	QGLShaderProgram distortionShader[NUM_DISTORTION_SHADERS];
+	QGLShaderProgram distortionShader;
+	QGLShaderProgram screenShader;
 
 	QGLFramebufferObject *backBuffer, *distortionBuffer, *screenBuffer;
 	GLuint defaultFBO;
-	unsigned int shaderNum;
 	unsigned int filterMode;
 	unsigned int patternMode;
     QTimer timer;
@@ -74,11 +68,11 @@ signals:
 
 
 	public slots:
-		void setShader(unsigned int shader_number);
 		void setTextureFilter(unsigned int filter_mode);
 		void setPattern(unsigned int pattern);
 		void reloadShaders(void);
-
+		void setDistortionShader(QString source);
+		void setScreenShader(QString source);
 };
 
 #endif // OVRRENDERWIDGET_H

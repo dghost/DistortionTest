@@ -80,10 +80,24 @@ void DistortionTest::triggeredDistortion(QAction *action)
 {
 	if (action == ui.actionNone)
 	{
-		glwidget->setShader(DISTORTION_NONE);
+		glwidget->setDistortionShader(QString(""));
 	} else if (action == ui.actionStandard)
 	{
-		glwidget->setShader(DISTORTION_BARREL);
+		QString shader;
+		QFile file("shaders/barrel.frag");
+		if(!file.open(QIODevice::ReadOnly)) {
+			QMessageBox::information(0, "error", file.errorString());
+		}
+
+		QTextStream in(&file);
+
+		while(!in.atEnd()) {
+			shader.append( in.readLine());
+			shader.append("\n");
+		}
+//		QMessageBox::information(0, "info", shader);
+		file.close();
+		glwidget->setDistortionShader(shader);
 	}
 }
 

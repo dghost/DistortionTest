@@ -31,7 +31,6 @@ RenderWidget::RenderWidget(QWidget *parent)
 	distortionToScreenRatio = 1.0;
 	backToDistortionRatio = 1.0;
 	distortionScale = 1.0;
-	shaderNum = DISTORTION_NONE;
 	filterMode = FILTER_NEAREST;
 	patternMode = PATTERN_GRID;
 }
@@ -85,19 +84,6 @@ void RenderWidget::reloadShaders(void)
 	patternShader[PATTERN_GRADIENT].addShaderFromSourceFile (QGLShader::Fragment, "shaders\\gradient.frag");
 	patternShader[PATTERN_GRADIENT].link();
 
-	for (int i = 0; i < NUM_DISTORTION_SHADERS ; i++)
-		distortionShader[i].removeAllShaders();
-
-	distortionShader[DISTORTION_NONE].addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
-	distortionShader[DISTORTION_NONE].addShaderFromSourceFile (QGLShader::Vertex,"shaders\\empty.shdr");
-	distortionShader[DISTORTION_NONE].addShaderFromSourceFile (QGLShader::Fragment, "shaders\\passthrough.frag");
-	distortionShader[DISTORTION_NONE].link();
-
-	distortionShader[DISTORTION_BARREL].addShaderFromSourceFile (QGLShader::Geometry,"shaders\\barrel.geom");
-	distortionShader[DISTORTION_BARREL].addShaderFromSourceFile (QGLShader::Vertex,"shaders\\empty.shdr");
-	distortionShader[DISTORTION_BARREL].addShaderFromSourceFile (QGLShader::Fragment, "shaders\\barrel.frag");
-	distortionShader[DISTORTION_BARREL].link();
-
 	doneCurrent();
 }
 
@@ -146,7 +132,8 @@ void RenderWidget::initializeGL()
 
 
 
-
+	setScreenShader("");
+	setDistortionShader("");
 	generateBuffers();
 	reloadShaders();
 }
@@ -176,31 +163,29 @@ void RenderWidget::drawBackBuffer()
 
 void RenderWidget::drawDistortion()
 {
-	QGLShaderProgram *currentDistortion = &distortionShader[shaderNum];
 	distortionBuffer->bind();
 	glViewport(0,0,distortionBuffer->width(),distortionBuffer->height());
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBindTexture(GL_TEXTURE_2D,backBuffer->texture());
-	currentDistortion->bind();
+	distortionShader.bind();
 
 	glDrawArrays(GL_POINTS, 0, 1);
 	glBindTexture(GL_TEXTURE_2D,0);
-	currentDistortion->release();
+	distortionShader.release();
 	distortionBuffer->release();
 }
 
 void RenderWidget::drawScreen()
 {
-	QGLShaderProgram *currentDistortion = &distortionShader[shaderNum];
 	screenBuffer->bind();
 	glViewport(0,0,screenBuffer->width(),screenBuffer->height());
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBindTexture(GL_TEXTURE_2D,distortionBuffer->texture());
-	distortionShader[DISTORTION_NONE].bind();
+	distortionShader.bind();
 
 	glDrawArrays(GL_POINTS, 0, 1);
 	glBindTexture(GL_TEXTURE_2D,0);
-	distortionShader[DISTORTION_NONE].release();
+	distortionShader.release();
 	screenBuffer->release();
 }
 
@@ -213,22 +198,49 @@ void RenderWidget::paintGL()
 	drawScreen();
 	
 	glViewport( 0, 0, this->width(), this->height() );
-	distortionShader[DISTORTION_NONE].bind();
+	screenShader.bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindTexture(GL_TEXTURE_2D,screenBuffer->texture());
 	glDrawArrays(GL_POINTS, 0, 1);
 	glBindTexture(GL_TEXTURE_2D,0);
-	distortionShader[DISTORTION_NONE].release();
+	screenShader.release();
 	
 }
 
-
-void RenderWidget::setShader(unsigned int shader_number)
+void RenderWidget::setDistortionShader(QString source)
 {
-	if (shader_number < NUM_DISTORTION_SHADERS)
-		shaderNum = shader_number;
+	distortionShader.removeAllShaders();
+	if (source.isEmpty())
+	{
+		distortionShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
+		distortionShader.addShaderFromSourceFile (QGLShader::Vertex,"shaders\\empty.shdr");
+		distortionShader.addShaderFromSourceFile (QGLShader::Fragment, "shaders\\passthrough.frag");
+		distortionShader.link();
+	} else {
+		distortionShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\barrel.geom");
+		distortionShader.addShaderFromSourceFile (QGLShader::Vertex,"shaders\\empty.shdr");
+		distortionShader.addShaderFromSourceCode (QGLShader::Fragment, source);
+		distortionShader.link();
+	}
 }
 
+
+void RenderWidget::setScreenShader(QString source)
+{
+	screenShader.removeAllShaders();
+	if (source.isEmpty())
+	{
+		screenShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
+		screenShader.addShaderFromSourceFile (QGLShader::Vertex,"shaders\\empty.shdr");
+		screenShader.addShaderFromSourceFile (QGLShader::Fragment, "shaders\\passthrough.frag");
+		screenShader.link();
+	} else {
+		screenShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
+		screenShader.addShaderFromSourceFile (QGLShader::Vertex,"shaders\\empty.shdr");
+		screenShader.addShaderFromSourceCode (QGLShader::Fragment, source);
+		screenShader.link();
+	}
+}
 void RenderWidget::setTextureFilter(unsigned int filter_mode)
 {
 	if (filter_mode < NUM_FILTER_MODES)
