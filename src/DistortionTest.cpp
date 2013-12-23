@@ -12,10 +12,15 @@ DistortionTest::DistortionTest(QWidget *parent)
 
 	glwidget = new RenderWidget(this);
 	glwidget->setFixedSize(1280,800);
+
 	QObject::connect(glwidget,SIGNAL(sizeScreenChanged(QSize)),ui.statusBar,SLOT(setScreenSize(QSize)));
 	QObject::connect(glwidget,SIGNAL(sizeSourceChanged(QSize)),ui.statusBar,SLOT(setSourceSize(QSize)));
 	QObject::connect(glwidget,SIGNAL(sizeDistortionChanged(QSize)),ui.statusBar,SLOT(setDistortionSize(QSize)));
-
+	connect(this,SIGNAL(changeTextureFilter(unsigned int)), glwidget,SLOT(setTextureFilter(unsigned int)));
+	connect(this,SIGNAL(changeSourceShader(QString)), glwidget,SLOT(setSourceShader(QString)));
+	connect(this,SIGNAL(changeDistortionShader(QString)), glwidget,SLOT(setDistortionShader(QString)));
+	connect(this,SIGNAL(changeScreenShader(QString)), glwidget,SLOT(setScreenShader(QString)));
+	connect(this,SIGNAL(changeRiftConfig(rift_t)), glwidget,SLOT(setRiftConfig(rift_t)));
 	ui.mainLayout->addWidget(glwidget);
 	ui.mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
@@ -30,7 +35,7 @@ DistortionTest::DistortionTest(QWidget *parent)
 
 	ui.actionNone->setCheckable(true);
 	ui.actionStandard->setCheckable(true);
-	ui.actionNone->setChecked(true);
+	ui.actionNone->trigger();
 
 	/* set up filter selection menu */
 
@@ -41,22 +46,32 @@ DistortionTest::DistortionTest(QWidget *parent)
 
 	ui.actionGL_NEAREST->setCheckable(true);
 	ui.actionGL_LINEAR->setCheckable(true);
-	ui.actionGL_NEAREST->setChecked(true);
+	ui.actionGL_NEAREST->trigger();
 
 	/* set up pattern selection menu */
 
 	patternGroup = new QActionGroup(this);
-	patternGroup->addAction(ui.actionSolid);
 	patternGroup->addAction(ui.actionCheckered);
 	patternGroup->addAction(ui.actionLines);
 	patternGroup->addAction(ui.actionGradient);
 	connect(patternGroup,SIGNAL(triggered(QAction*)),this,SLOT(triggeredPattern(QAction*)));
 
-	ui.actionSolid->setCheckable(true);
 	ui.actionCheckered->setCheckable(true);
 	ui.actionLines->setCheckable(true);
 	ui.actionGradient->setCheckable(true);
-	ui.actionSolid->setChecked(true);
+	ui.actionCheckered->trigger();
+
+	hmdGroup = new QActionGroup(this);
+	hmdGroup->addAction(ui.actionDK1);
+	hmdGroup->addAction(ui.actionHD_DK);
+
+	connect(hmdGroup,SIGNAL(triggered(QAction*)),this,SLOT(triggeredHMD(QAction*)));
+
+	ui.actionDK1->setCheckable(true);
+	ui.actionHD_DK->setCheckable(true);
+	ui.actionDK1->trigger();
+
+
 }
 
 DistortionTest::~DistortionTest()
@@ -72,7 +87,7 @@ void DistortionTest::about()
 	QMessageBox msgBox;
 	msgBox.setWindowTitle("About");
 	msgBox.setTextFormat(Qt::RichText);
-	msgBox.setText("Oculus Rift Distortion Test<br>Version 0.2<br><br>Luke Groeninger<br><a href='http://dghost.net'>http://dghost.net</a>");
+	msgBox.setText("Oculus Rift Distortion Test<br>Version 0.3<br><br>Luke Groeninger<br><a href='http://dghost.net'>http://dghost.net</a>");
 	msgBox.setStandardButtons(QMessageBox::Ok);
 	msgBox.setDefaultButton(QMessageBox::Ok);
 	int ret = msgBox.exec();
@@ -99,7 +114,7 @@ void DistortionTest::triggeredDistortion(QAction *action)
 		}
 //		QMessageBox::information(0, "info", shader);
 		file.close();
-		glwidget->setDistortionShader(shader);
+		emit changeDistortionShader(shader);
 	}
 }
 
@@ -107,10 +122,10 @@ void DistortionTest::triggeredFiltering(QAction *action)
 {
 	if (action == ui.actionGL_NEAREST)
 	{
-		glwidget->setTextureFilter(FILTER_NEAREST);
+		emit changeTextureFilter(FILTER_NEAREST);
 	} else if (action == ui.actionGL_LINEAR)
 	{
-		glwidget->setTextureFilter(FILTER_BILINEAR);
+		emit changeTextureFilter(FILTER_BILINEAR);
 	}
 }
 
@@ -146,7 +161,8 @@ void DistortionTest::triggeredPattern(QAction *action)
 		//		QMessageBox::information(0, "info", shader);
 		file.close();
 	}
-	glwidget->setSourceShader(shader);
+
+	emit changeSourceShader(shader);
 
 
 }
@@ -166,4 +182,29 @@ void DistortionTest::saveScreenShot(void)
 	if (!temp.save(filename,"PNG"))
 		qDebug() << "Error saving screenshot '" << filename <<"'\n";
 
+}
+
+void DistortionTest::triggeredHMD(QAction *action)
+{
+	if (action == ui.actionDK1)
+	{
+		rift_t temp = {1280, 800, 
+			0.14976f, 0.0936f,
+			0.064f,
+			0.0635f,
+			0.041f,
+		{ 1.0f, 0.22f, 0.24f, 0.0f },
+		{ 0.996f, -0.004f, 1.014f, 0.0f }};
+		emit changeRiftConfig(temp);
+	} else if (action == ui.actionHD_DK)
+	{
+		rift_t temp = {1920, 1080, 
+			0.12096f, 0.06804f,
+			0.064f,
+			0.0635f,
+			0.040f,
+		{ 1.0f, 0.18f, 0.115f, 0.0f },
+		{ 0.996f, -0.004f, 1.014f, 0.0f }};
+		emit changeRiftConfig(temp);
+	}
 }

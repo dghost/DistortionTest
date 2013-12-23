@@ -23,13 +23,23 @@ private:
 	QActionGroup *distortionGroup;
 	QActionGroup *filteringGroup;
 	QActionGroup *patternGroup;
+	QActionGroup *hmdGroup;
 
 	public slots:
 		void about();
 		void triggeredDistortion(QAction *action);
 		void triggeredFiltering(QAction *action);
 		void triggeredPattern(QAction *action);
+		void triggeredHMD(QAction *action);
 		void saveScreenShot();
+
+signals:
+		void changeTextureFilter(unsigned int newMode);
+		void changeSourceShader(QString shader);
+		void changeDistortionShader(QString shader);
+		void changeScreenShader(QString shader);
+		void changeRiftConfig(rift_t config);
+
 };
 
 #endif // OVRIMAGEQUALITY_H

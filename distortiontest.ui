@@ -75,14 +75,21 @@
      <property name="title">
       <string>Test Pattern</string>
      </property>
-     <addaction name="actionSolid"/>
      <addaction name="actionCheckered"/>
      <addaction name="actionLines"/>
      <addaction name="actionGradient"/>
     </widget>
+    <widget class="QMenu" name="menuHMD">
+     <property name="title">
+      <string>HMD</string>
+     </property>
+     <addaction name="actionDK1"/>
+     <addaction name="actionHD_DK"/>
+    </widget>
     <addaction name="menuDistortion_Shader"/>
     <addaction name="menuFiltering_Mode"/>
     <addaction name="menuTest_Pattern"/>
+    <addaction name="menuHMD"/>
     <addaction name="actionScreen_Shot"/>
    </widget>
    <addaction name="menuFile"/>
@@ -169,9 +176,14 @@
     <string>F6</string>
    </property>
   </action>
-  <action name="actionSolid">
+  <action name="actionDK1">
    <property name="text">
-    <string>Solid</string>
+    <string>DK1</string>
+   </property>
+  </action>
+  <action name="actionHD_DK">
+   <property name="text">
+    <string>HD DK</string>
    </property>
   </action>
  </widget>
