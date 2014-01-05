@@ -16,7 +16,7 @@ in vec2 TexCoords;
 
 out vec4 outColor; // GLSL 1.50 or higher
 
-vec2 HmdWarp(vec2 in01)
+vec2 Warp(vec2 in01)
 {
 	vec2 theta = (in01 - LensCenter) * ScaleIn; // Scales to [-1, 1]
 	float rSq = theta.x * theta.x + theta.y * theta.y;
@@ -27,16 +27,9 @@ vec2 HmdWarp(vec2 in01)
 	return (LensCenter + Scale * rvector);
 }
 
-
 void main(void)
 {
 	// scale the texture coordinates for better noise
-	vec2 tc = HmdWarp(TexCoords);
-	tc.y = 1.0 - tc.y;
-	if (!all(equal(clamp(tc, ScreenCenter-vec2(0.25,0.5), ScreenCenter+vec2(0.25,0.5)), tc)))
-	{
-		outColor = vec4(vec3(0.0),1.0);
-	} else {
-		outColor = vec4(tc,0.0,1.0);
-	}
+	vec2 warpCoords = Warp(TexCoords);
+	outColor = vec4(warpCoords,0.0,1.0);
 }

@@ -16,7 +16,18 @@ in vec2 TexCoords;
 
 out vec4 outColor; // GLSL 1.50 or higher
 
-vec2 HmdWarp(vec2 in01)
+// not always necessary, but prevents image problems with certain AMD configurations
+vec4 texture2Dclamp(sampler2D texture, vec2 tc)
+{
+	if (!all(equal(clamp(tc, ScreenCenter-vec2(0.25,0.5), ScreenCenter+vec2(0.25,0.5)), tc)))
+	{
+		return vec4(vec3(0.0),1.0);
+	} else {
+		return texture2D(texture,tc);
+	}
+}
+
+vec2 Warp(vec2 in01)
 {
 	vec2 theta = (in01 - LensCenter) * ScaleIn; // Scales to [-1, 1]
 	float rSq = theta.x * theta.x + theta.y * theta.y;
@@ -27,16 +38,14 @@ vec2 HmdWarp(vec2 in01)
 	return (LensCenter + Scale * rvector);
 }
 
+vec4 Filter(vec2 tc)
+{
+	return texture2Dclamp(Texture,tc);
+}
 
 void main(void)
 {
 	// scale the texture coordinates for better noise
-	vec2 tc = HmdWarp(TexCoords);
-	tc.y = 1.0 - tc.y;
-	if (!all(equal(clamp(tc, ScreenCenter-vec2(0.25,0.5), ScreenCenter+vec2(0.25,0.5)), tc)))
-	{
-		outColor = vec4(vec3(0.0),1.0);
-	} else {
-		outColor = texture2D(Texture,tc);
-	}
+	vec2 warpCoords = Warp(TexCoords);
+	outColor = Filter(warpCoords);
 }
