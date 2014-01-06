@@ -166,7 +166,7 @@
   </action>
   <action name="actionSourceNone">
    <property name="text">
-    <string>None</string>
+    <string>Texture</string>
    </property>
   </action>
   <action name="actionTextureNone">

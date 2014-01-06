@@ -4,7 +4,7 @@
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QVBoxLayout>
 #include <QActionGroup>
-
+#include <QFileSystemWatcher>
 #include "ui_distortiontest.h"
 #include "RenderWidget.h"
 
@@ -28,6 +28,9 @@ private:
 	QList<QAction *> distortionMenuActions;
 	QList<QAction *> sourceMenuActions;
 	QList<QAction *> textureMenuActions;
+	QFileSystemWatcher distortionDirectory;
+	QFileSystemWatcher sourceDirectory;
+	QFileSystemWatcher textureDirectory;
 
 	public slots:
 		void about();

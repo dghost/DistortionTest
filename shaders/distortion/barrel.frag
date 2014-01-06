@@ -12,7 +12,6 @@ uniform vec4 HmdWarpParam = vec4(1.0,0.22,0.24,0.0);
 invariant in vec2 ScreenCenter;
 invariant in vec2 LensCenter;
 
-
 //layout(location = 0) out vec4 outColor; // GLSL 3.30 or higher only
 
 out vec4 outColor; // GLSL 1.50 or higher

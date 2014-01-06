@@ -46,7 +46,7 @@ DistortionTest::DistortionTest(QWidget *parent)
 
 	ui.actionGL_NEAREST->setCheckable(true);
 	ui.actionGL_LINEAR->setCheckable(true);
-	ui.actionGL_NEAREST->trigger();
+	ui.actionGL_LINEAR->trigger();
 
 	/* set up pattern selection menu */
 
@@ -74,9 +74,20 @@ DistortionTest::DistortionTest(QWidget *parent)
 
 	//	QImage temp("textures/quake2-10.png");
 	//	glwidget->setSourceTexture(temp);
+
 	enumerateDistortionMenu("shaders/distortion");
+	connect(&distortionDirectory,SIGNAL(directoryChanged(QString)),this,SLOT(enumerateDistortionMenu(QString)));
+	distortionDirectory.addPath("shaders/distortion");
+
 	enumerateSourceMenu("shaders/pattern");
+	connect(&sourceDirectory,SIGNAL(directoryChanged(QString)),this,SLOT(enumerateSourceMenu(QString)));
+	sourceDirectory.addPath("shaders/pattern");
+
+
 	enumerateTextureMenu("textures/");
+	connect(&textureDirectory,SIGNAL(directoryChanged(QString)),this,SLOT(enumerateTextureMenu(QString)));
+	textureDirectory.addPath("textures/");
+
 }
 
 DistortionTest::~DistortionTest()
@@ -164,6 +175,7 @@ void DistortionTest::triggeredPattern(QAction *action)
 			}
 			file.close();
 		}
+		//		QMessageBox::information(0, "info", shader);
 		emit changeSourceShader(shader);
 	}
 }

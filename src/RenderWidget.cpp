@@ -1,23 +1,16 @@
 #include "RenderWidget.h"
 #include <QMessageBox>
 
-char solidgreen[] = "#version 150\n"
-	"out vec4 outColor;\n"
-	"void main(void)\n"
-	"{\n"
-	"outColor = vec4(0.0,0.75,0.0,1.0);\n"
-	"}\n";
-
 char emptyshader[] = "#version 150\n"
 	"void main() {}\n";
 
 char texturepassthrough[] = "#version 150\n"
 "uniform sampler2D Texture;\n"
 "in vec2 texCoords;\n"
-"out vec4 out_Color;\n"
+"out vec4 outColor;\n"
 "void main(void)\n"
 "{\n"
-"	out_Color =  texture(Texture,texCoords);\n"
+"	outColor =  texture(Texture,texCoords);\n"
 "}\n";
 
 QGLFormat desiredFormat()
@@ -271,7 +264,7 @@ void RenderWidget::linkSource(QString source)
 
 	patternShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
 	patternShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
-	patternShader.addShaderFromSourceCode (QGLShader::Fragment, solidgreen);
+	patternShader.addShaderFromSourceCode (QGLShader::Fragment, texturepassthrough);
 	patternShader.link();
 }
 
