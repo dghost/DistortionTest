@@ -21,6 +21,8 @@ DistortionTest::DistortionTest(QWidget *parent)
 	connect(this,SIGNAL(changeDistortionShader(QString)), glwidget,SLOT(setDistortionShader(QString)));
 	connect(this,SIGNAL(changeScreenShader(QString)), glwidget,SLOT(setScreenShader(QString)));
 	connect(this,SIGNAL(changeRiftConfig(rift_t)), glwidget,SLOT(setRiftConfig(rift_t)));
+	connect(this,SIGNAL(changeTexture(QImage)), glwidget,SLOT(setSourceTexture(QImage)));
+
 	ui.mainLayout->addWidget(glwidget);
 	ui.mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
@@ -29,12 +31,10 @@ DistortionTest::DistortionTest(QWidget *parent)
 	/* set up shader selection menu */
 	distortionGroup = new QActionGroup(this);
 	distortionGroup->addAction(ui.actionNone);
-	distortionGroup->addAction(ui.actionStandard);
 
 	connect(distortionGroup,SIGNAL(triggered(QAction*)),this,SLOT(triggeredDistortion(QAction*)));
 
 	ui.actionNone->setCheckable(true);
-	ui.actionStandard->setCheckable(true);
 	ui.actionNone->trigger();
 
 	/* set up filter selection menu */
@@ -51,15 +51,16 @@ DistortionTest::DistortionTest(QWidget *parent)
 	/* set up pattern selection menu */
 
 	patternGroup = new QActionGroup(this);
-	patternGroup->addAction(ui.actionCheckered);
-	patternGroup->addAction(ui.actionLines);
-	patternGroup->addAction(ui.actionGradient);
+	patternGroup->addAction(ui.actionSourceNone);
 	connect(patternGroup,SIGNAL(triggered(QAction*)),this,SLOT(triggeredPattern(QAction*)));
+	ui.actionSourceNone->setCheckable(true);
+	ui.actionSourceNone->trigger();
 
-	ui.actionCheckered->setCheckable(true);
-	ui.actionLines->setCheckable(true);
-	ui.actionGradient->setCheckable(true);
-	ui.actionCheckered->trigger();
+	textureGroup = new QActionGroup(this);
+	textureGroup->addAction(ui.actionTextureNone);
+	connect(textureGroup,SIGNAL(triggered(QAction*)),this,SLOT(triggeredTexture(QAction*)));
+	ui.actionTextureNone->setCheckable(true);
+	ui.actionTextureNone->trigger();
 
 	hmdGroup = new QActionGroup(this);
 	hmdGroup->addAction(ui.actionDK1);
@@ -71,7 +72,11 @@ DistortionTest::DistortionTest(QWidget *parent)
 	ui.actionHD_DK->setCheckable(true);
 	ui.actionDK1->trigger();
 
-
+	//	QImage temp("textures/quake2-10.png");
+	//	glwidget->setSourceTexture(temp);
+	enumerateDistortionMenu("shaders/distortion");
+	enumerateSourceMenu("shaders/pattern");
+	enumerateTextureMenu("textures/");
 }
 
 DistortionTest::~DistortionTest()
@@ -97,23 +102,28 @@ void DistortionTest::triggeredDistortion(QAction *action)
 {
 	if (action == ui.actionNone)
 	{
-		glwidget->setDistortionShader(QString(""));
-	} else if (action == ui.actionStandard)
+		emit changeDistortionShader(QString(""));
+	} else 
 	{
 		QString shader;
-		QFile file("shaders/barrel.frag");
+		QString filePath("shaders/distortion/");
+		filePath.append(action->text());
+		filePath.append(".frag");
+		QFile file(filePath);
 		if(!file.open(QIODevice::ReadOnly)) {
-			QMessageBox::information(0, "error", file.errorString());
-		}
+			//QMessageBox::information(0, "error", file.errorString());
+			qDebug() << file.errorString();	
+		} else {
 
-		QTextStream in(&file);
+			QTextStream in(&file);
 
-		while(!in.atEnd()) {
-			shader.append( in.readLine());
-			shader.append("\n");
+			while(!in.atEnd()) {
+				shader.append( in.readLine());
+				shader.append("\n");
+			}
+			file.close();
 		}
-//		QMessageBox::information(0, "info", shader);
-		file.close();
+		//		QMessageBox::information(0, "info", shader);
 		emit changeDistortionShader(shader);
 	}
 }
@@ -131,40 +141,46 @@ void DistortionTest::triggeredFiltering(QAction *action)
 
 void DistortionTest::triggeredPattern(QAction *action)
 {
-	QString sourceFile;
-	if (action == ui.actionCheckered)
+	if (action == ui.actionSourceNone)
 	{
-		sourceFile = "shaders/checker.frag";
-	} else if (action == ui.actionLines)
+		emit changeSourceShader(QString(""));
+	} else 
 	{
-		sourceFile = "shaders/lines.frag";
-	} else if (action == ui.actionGradient)
-	{
-		sourceFile = "shaders/gradient.frag";
-	}
-
-	QString shader;
-
-	if (!sourceFile.isEmpty())
-	{
-		QFile file(sourceFile);
+		QString shader;
+		QString filePath("shaders/pattern/");
+		filePath.append(action->text());
+		filePath.append(".frag");
+		QFile file(filePath);
 		if(!file.open(QIODevice::ReadOnly)) {
-			QMessageBox::information(0, "error", file.errorString());
-		}
+			//QMessageBox::information(0, "error", file.errorString());
+			qDebug() << file.errorString();	
+		} else {
 
-		QTextStream in(&file);
+			QTextStream in(&file);
 
-		while(!in.atEnd()) {
-			shader.append( in.readLine());
-			shader.append("\n");
+			while(!in.atEnd()) {
+				shader.append( in.readLine());
+				shader.append("\n");
+			}
+			file.close();
 		}
-		//		QMessageBox::information(0, "info", shader);
-		file.close();
+		emit changeSourceShader(shader);
 	}
+}
 
-	emit changeSourceShader(shader);
-
-
+void DistortionTest::triggeredTexture(QAction *action)
+{
+	if (action == ui.actionTextureNone)
+	{
+		emit changeTexture(QImage());
+	} else 
+	{
+		QString shader;
+		QString filePath("textures/");
+		filePath.append(action->text());
+		QImage file(filePath);
+		emit changeTexture(file);
+	}
 }
 
 void DistortionTest::saveScreenShot(void)
@@ -206,5 +222,126 @@ void DistortionTest::triggeredHMD(QAction *action)
 		{ 1.0f, 0.18f, 0.115f, 0.0f },
 		{ 0.996f, -0.004f, 1.014f, 0.0f }};
 		emit changeRiftConfig(temp);
+	}
+}
+
+void DistortionTest::enumerateDistortionMenu(QString path)
+{
+	ui.actionNone->trigger();
+
+	foreach(QAction *action,distortionMenuActions)
+	{
+		distortionMenuActions.removeOne(action);
+		ui.menuDistortionShader->removeAction(action);
+		distortionGroup->removeAction(action);
+		delete action;
+	}
+
+
+	QDir directory(path);
+	if (!directory.exists())
+	{
+		qDebug() << "No such path";
+		return;
+	}
+	QStringList filter;
+	filter.append("*.frag");
+	QFileInfoList files = directory.entryInfoList(filter,QDir::Files);
+	QStringList names;
+	foreach(QFileInfo file,files)
+	{
+		names.append(file.baseName());
+	}
+	names.sort();
+	foreach (QString name, names)
+	{
+		qDebug() << name;
+		QAction *temp = new QAction(name,ui.menuDistortionShader);
+		temp->setCheckable(true);
+		ui.menuDistortionShader->addAction(temp);
+		distortionGroup->addAction(temp);
+		distortionMenuActions.append(temp);
+	}
+}
+
+
+void DistortionTest::enumerateSourceMenu(QString path)
+{
+	ui.actionSourceNone->trigger();
+	foreach(QAction *action,sourceMenuActions)
+	{
+		sourceMenuActions.removeOne(action);
+		ui.menuSourceShader->removeAction(action);
+		patternGroup->removeAction(action);
+		delete action;
+	}
+
+
+	QDir directory(path);
+	if (!directory.exists())
+	{
+		qDebug() << "No such path";
+		return;
+	}
+	QStringList filter;
+	filter.append("*.frag");
+	QFileInfoList files = directory.entryInfoList(filter,QDir::Files);
+	QStringList names;
+	foreach(QFileInfo file,files)
+	{
+		names.append(file.baseName());
+	}
+	names.sort();
+	foreach (QString name, names)
+	{
+		qDebug() << name;
+		QAction *temp = new QAction(name,ui.menuSourceShader);
+		temp->setCheckable(true);
+		ui.menuSourceShader->addAction(temp);
+		patternGroup->addAction(temp);
+		sourceMenuActions.append(temp);
+	}
+}
+
+void DistortionTest::enumerateTextureMenu(QString path)
+{
+	ui.actionTextureNone->trigger();
+
+	foreach(QAction *action,textureMenuActions)
+	{
+		textureMenuActions.removeOne(action);
+		ui.menuTexture->removeAction(action);
+		textureGroup->removeAction(action);
+		delete action;
+	}
+
+
+	QDir directory(path);
+	if (!directory.exists())
+	{
+		qDebug() << "No such path";
+		return;
+	}
+	QStringList filter;
+	filter.append("*.jpg");
+	filter.append("*.jpeg");
+	filter.append("*.png");
+	filter.append("*.bmp");
+	filter.append("*.gif");
+	QFileInfoList files = directory.entryInfoList(filter,QDir::Files);
+	QStringList names;
+	foreach(QFileInfo file,files)
+	{
+		names.append(file.fileName());
+	}
+	names.sort();
+	foreach (QString name, names)
+	{
+		qDebug() << name;
+		QAction *temp = new QAction(name,ui.menuTexture);
+		temp->setCheckable(true);
+		ui.menuTexture->addAction(temp);
+		textureGroup->addAction(temp);
+		textureMenuActions.append(temp);
 	}
 }

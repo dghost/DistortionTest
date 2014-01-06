@@ -1,16 +1,17 @@
 #version 150
 
+// texture properties
 uniform sampler2D Texture; //Image to be projected
+uniform vec2 TextureSize;
+in vec2 TexCoords;
 
+// distortion parameters
 uniform vec2 ScaleIn = vec2(4.0,2.0);
 uniform vec2 Scale = vec2(0.25,0.5);
-
 uniform vec4 HmdWarpParam = vec4(1.0,0.22,0.24,0.0);
-
 invariant in vec2 ScreenCenter;
 invariant in vec2 LensCenter;
 
-in vec2 TexCoords;
 
 //layout(location = 0) out vec4 outColor; // GLSL 3.30 or higher only
 

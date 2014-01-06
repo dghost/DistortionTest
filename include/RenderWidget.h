@@ -57,6 +57,7 @@ private:
 
 	QString patternSource;
 	QGLShaderProgram patternShader;
+	QImage sourceTexture;
 
 	QString distortionSource;
 	QGLShaderProgram distortionShader;
@@ -89,6 +90,7 @@ signals:
 	public slots:
 		void setTextureFilter(unsigned int filter_mode);
 		void setSourceShader(QString source);
+		void setSourceTexture(QImage texture);
 		void setDistortionShader(QString source);
 		void setScreenShader(QString source);
 		void setRiftConfig(rift_t config);

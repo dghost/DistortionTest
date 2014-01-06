@@ -51,18 +51,18 @@
     </property>
     <addaction name="actionAbout"/>
     <addaction name="separator"/>
+    <addaction name="actionScreen_Shot"/>
     <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menuOptions">
+   <widget class="QMenu" name="menuDistortion">
     <property name="title">
-     <string>Options</string>
+     <string>Distortion</string>
     </property>
-    <widget class="QMenu" name="menuDistortion_Shader">
+    <widget class="QMenu" name="menuDistortionShader">
      <property name="title">
-      <string>Distortion Shader</string>
+      <string>Shader</string>
      </property>
      <addaction name="actionNone"/>
-     <addaction name="actionStandard"/>
     </widget>
     <widget class="QMenu" name="menuFiltering_Mode">
      <property name="title">
@@ -71,14 +71,6 @@
      <addaction name="actionGL_NEAREST"/>
      <addaction name="actionGL_LINEAR"/>
     </widget>
-    <widget class="QMenu" name="menuTest_Pattern">
-     <property name="title">
-      <string>Test Pattern</string>
-     </property>
-     <addaction name="actionCheckered"/>
-     <addaction name="actionLines"/>
-     <addaction name="actionGradient"/>
-    </widget>
     <widget class="QMenu" name="menuHMD">
      <property name="title">
       <string>HMD</string>
@@ -86,14 +78,32 @@
      <addaction name="actionDK1"/>
      <addaction name="actionHD_DK"/>
     </widget>
-    <addaction name="menuDistortion_Shader"/>
+    <addaction name="menuDistortionShader"/>
     <addaction name="menuFiltering_Mode"/>
-    <addaction name="menuTest_Pattern"/>
     <addaction name="menuHMD"/>
-    <addaction name="actionScreen_Shot"/>
+   </widget>
+   <widget class="QMenu" name="menuSource_Image">
+    <property name="title">
+     <string>Source Image</string>
+    </property>
+    <widget class="QMenu" name="menuSourceShader">
+     <property name="title">
+      <string>Shader</string>
+     </property>
+     <addaction name="actionSourceNone"/>
+    </widget>
+    <widget class="QMenu" name="menuTexture">
+     <property name="title">
+      <string>Texture</string>
+     </property>
+     <addaction name="actionTextureNone"/>
+    </widget>
+    <addaction name="menuSourceShader"/>
+    <addaction name="menuTexture"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuOptions"/>
+   <addaction name="menuSource_Image"/>
+   <addaction name="menuDistortion"/>
   </widget>
   <widget class="StatusWidget" name="statusBar"/>
   <action name="actionNone">
@@ -105,14 +115,6 @@
    </property>
    <property name="text">
     <string>None</string>
-   </property>
-  </action>
-  <action name="actionStandard">
-   <property name="checkable">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Standard</string>
    </property>
   </action>
   <action name="actionGL_NEAREST">
@@ -144,30 +146,6 @@
     <string>Exit</string>
    </property>
   </action>
-  <action name="actionCheckered">
-   <property name="checkable">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Checkered</string>
-   </property>
-  </action>
-  <action name="actionGradient">
-   <property name="checkable">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Gradient</string>
-   </property>
-  </action>
-  <action name="actionLines">
-   <property name="checkable">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Lines</string>
-   </property>
-  </action>
   <action name="actionScreen_Shot">
    <property name="text">
     <string>Save Screen Shot</string>
@@ -184,6 +162,16 @@
   <action name="actionHD_DK">
    <property name="text">
     <string>HD DK</string>
+   </property>
+  </action>
+  <action name="actionSourceNone">
+   <property name="text">
+    <string>None</string>
+   </property>
+  </action>
+  <action name="actionTextureNone">
+   <property name="text">
+    <string>None</string>
    </property>
   </action>
  </widget>

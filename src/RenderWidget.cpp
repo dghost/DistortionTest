@@ -155,7 +155,14 @@ void RenderWidget::drawBackBuffer()
 		glViewport(0,0,backBuffer->width(),backBuffer->height());
 		glClear(GL_COLOR_BUFFER_BIT);
 		patternShader.bind();
-		patternShader.setUniformValue("in_ScreenSize", screenResolution);
+		patternShader.setUniformValue("ScreenSize", screenResolution);
+
+		if (!sourceTexture.isNull())
+		{
+			bindTexture(sourceTexture);
+			patternShader.setUniformValue("TextureSize",sourceTexture.size());
+		}
+
 		glDrawArrays(GL_POINTS, 0, 1);
 		glBindTexture(GL_TEXTURE_2D,0);
 		patternShader.release();
@@ -186,6 +193,7 @@ void RenderWidget::drawDistortion()
 		distortionShader.setUniformValue("DistortionOffset", 1.0f - (2.0f * riftConfig.lens_separation_distance) / riftConfig.h_screen_size);
 		distortionShader.setUniformValue("ScaleIn",4.0, 2.0/aspect);
 		distortionShader.setUniformValue("Scale",0.25, 0.5 * aspect);
+		distortionShader.setUniformValue("TextureSize",backBuffer->size());
 		glDrawArrays(GL_POINTS, 0, 1);
 		glBindTexture(GL_TEXTURE_2D,0);
 		distortionShader.release();
@@ -285,6 +293,7 @@ void RenderWidget::linkDistortion(QString source)
 			return;
 		else {
 			QMessageBox::information(0, "error", distortionShader.log());
+//			qDebug() << distortionShader.log();
 			distortionShader.removeAllShaders();
 		}
 	} 
@@ -361,4 +370,10 @@ void RenderWidget::setRiftConfig(rift_t config)
 {
 	riftConfig = config;
 	setScreenResolution(QSize(riftConfig.h_resolution,riftConfig.v_resolution));
+}
+
+void RenderWidget::setSourceTexture(QImage texture)
+{
+	sourceTexture = texture;
+	patternDirty = true;
 }

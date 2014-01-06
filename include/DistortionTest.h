@@ -23,7 +23,11 @@ private:
 	QActionGroup *distortionGroup;
 	QActionGroup *filteringGroup;
 	QActionGroup *patternGroup;
+	QActionGroup *textureGroup;
 	QActionGroup *hmdGroup;
+	QList<QAction *> distortionMenuActions;
+	QList<QAction *> sourceMenuActions;
+	QList<QAction *> textureMenuActions;
 
 	public slots:
 		void about();
@@ -31,7 +35,11 @@ private:
 		void triggeredFiltering(QAction *action);
 		void triggeredPattern(QAction *action);
 		void triggeredHMD(QAction *action);
+		void triggeredTexture(QAction *action);
 		void saveScreenShot();
+		void enumerateDistortionMenu(QString path);
+		void enumerateSourceMenu(QString path);
+		void enumerateTextureMenu(QString path);
 
 signals:
 		void changeTextureFilter(unsigned int newMode);
@@ -39,7 +47,7 @@ signals:
 		void changeDistortionShader(QString shader);
 		void changeScreenShader(QString shader);
 		void changeRiftConfig(rift_t config);
-
+		void changeTexture(QImage texture);
 };
 
 #endif // OVRIMAGEQUALITY_H
