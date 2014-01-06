@@ -7,6 +7,7 @@
 #include <QGLFramebufferObject>
 #include <QTimer>
 #include <QImage>
+#include <QMessageBox>
 
 enum {
 	FILTER_NEAREST,
@@ -51,9 +52,11 @@ private:
 	void drawBackBuffer();
 	void drawDistortion();
 	void drawScreen();
-	void linkSource(QString source);
-	void linkDistortion(QString source);
-	void linkScreen(QString source);
+	bool linkSource(QString source);
+	bool linkDistortion(QString source);
+	bool linkScreen(QString source);
+
+	QMessageBox *msgBox;
 
 	QString patternSource;
 	QGLShaderProgram patternShader;
@@ -95,6 +98,8 @@ signals:
 		void setScreenShader(QString source);
 		void setRiftConfig(rift_t config);
 		void setScreenResolution(QSize resolution);
+		void errorBox(QString title, QString message);
+		void closeErrorBox(int result);
 };
 
 #endif // OVRRENDERWIDGET_H

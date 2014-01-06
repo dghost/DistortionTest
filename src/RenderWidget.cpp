@@ -1,5 +1,5 @@
 #include "RenderWidget.h"
-#include <QMessageBox>
+
 
 char emptyshader[] = "#version 150\n"
 	"void main() {}\n";
@@ -13,30 +13,10 @@ char texturepassthrough[] = "#version 150\n"
 "	outColor =  texture(Texture,texCoords);\n"
 "}\n";
 
-QGLFormat desiredFormat()
-{
-    QGLFormat fmt;
-    fmt.setSwapInterval(1);
-    return fmt;
-}
-
 RenderWidget::RenderWidget(QWidget *parent)
-	: QGLWidget(desiredFormat(),parent)
+	: QGLWidget(parent)
 {
 //	QWidget::setFixedSize(QSize(1280,800));
-	connect(&timer, SIGNAL(timeout()), this, SLOT(updateGL()));
-    if(format().swapInterval() == -1)
-    {
-        // V_blank synchronization not available (tearing likely to happen)
-        qDebug("Swap Buffers at v_blank not available: refresh at approx 60fps.");
-        timer.setInterval(17);
-    }
-    else
-    {
-        // V_blank synchronization available
-        timer.setInterval(0);
-    }
-    timer.start();
 	backBuffer = NULL;
 	distortionBuffer = NULL;
 	screenBuffer = NULL;
@@ -50,6 +30,7 @@ RenderWidget::RenderWidget(QWidget *parent)
 	distortionDirty = true;
 	screenSource = "";
 	screenDirty = true;
+	msgBox = NULL;
 
 	rift_t temp = {1280, 800, 
 		0.14976f, 0.0936f,
@@ -83,6 +64,28 @@ QSize RenderWidget::maximumSizeHint() const
 }
 */
 
+void RenderWidget::errorBox(QString title, QString message)
+{
+	if (msgBox != NULL)
+		closeErrorBox(0);
+
+	msgBox = new QMessageBox( this );
+	msgBox->setAttribute( Qt::WA_DeleteOnClose ); //makes sure the msgbox is deleted automatically when closed
+	msgBox->setStandardButtons( QMessageBox::Ok );
+	msgBox->setWindowTitle( title );
+	msgBox->setText( message );
+	msgBox->setIcon(QMessageBox::Critical);
+	msgBox->setModal( false ); // if you want it non-modal
+	msgBox->open( this, SLOT(closeErrorBox(int)) );
+}
+
+void RenderWidget::closeErrorBox(int result)
+{
+	if (msgBox != NULL)
+		msgBox->close();
+
+	msgBox = NULL;
+}
 QSize RenderWidget::sizeHint() const
 {
 	return QSize(riftConfig.h_resolution, riftConfig.v_resolution);
@@ -137,7 +140,7 @@ void RenderWidget::resizeGL( int w, int h )
 
 //	glViewport( 0, 0, (GLint)w, (GLint)h );
 //	emit(sizeChanged(QSize(w,h)));
-
+	updateGL();
 }
 
 void RenderWidget::drawBackBuffer()
@@ -164,7 +167,6 @@ void RenderWidget::drawBackBuffer()
 
 void RenderWidget::drawDistortion()
 {
-		linkDistortion(distortionSource);
 		distortionBuffer->bind();
 		glViewport(0,0,distortionBuffer->width(),distortionBuffer->height());
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -195,7 +197,6 @@ void RenderWidget::drawDistortion()
 
 void RenderWidget::drawScreen()
 {
-		linkScreen(screenSource);
 		screenBuffer->bind();
 		glViewport(0,0,screenBuffer->width(),screenBuffer->height());
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -212,29 +213,32 @@ void RenderWidget::drawScreen()
 void RenderWidget::paintGL()
 {
 	// draw the scene:
-
+	bool linkSuccess = true;
 	if (patternDirty)
 	{
-		linkSource(patternSource);
-		drawBackBuffer();
 		patternDirty = false;
 		distortionDirty = true;
+		linkSuccess = linkSuccess && linkSource(patternSource);
+		drawBackBuffer();
 	}
 
 	if (distortionDirty)
 	{
-		linkDistortion(distortionSource);
-		drawDistortion();
 		distortionDirty = false;
 		screenDirty = true;
+		linkSuccess = linkSuccess && linkDistortion(distortionSource);
+		drawDistortion();
 	}
 
 	if (screenDirty)
 	{
-		linkScreen(screenSource);
-		drawScreen();
 		screenDirty = false;
+		linkSuccess = linkSuccess && linkScreen(screenSource);
+		drawScreen();
 	}
+
+	if (linkSuccess)
+		closeErrorBox(0);
 
 	glViewport( 0, 0, this->width(), this->height() );
 	screenShader.bind();
@@ -246,19 +250,21 @@ void RenderWidget::paintGL()
 	
 }
 
-void RenderWidget::linkSource(QString source)
+bool RenderWidget::linkSource(QString source)
 {
+	bool result = true;
 	patternShader.removeAllShaders();
 	if (!source.isEmpty())
 	{
 		patternShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
 		patternShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
-		patternShader.addShaderFromSourceCode (QGLShader::Fragment, source);
-		if (patternShader.link())
-			return;
+		if (patternShader.addShaderFromSourceCode (QGLShader::Fragment, source) 
+			&& patternShader.link())
+			return true;
 		else {
-			QMessageBox::information(0, "error", patternShader.log());
+			errorBox(QString("Error compiling source shader"), patternShader.log());
 			patternShader.removeAllShaders();
+			result = false;
 		}
 	} 
 
@@ -266,28 +272,32 @@ void RenderWidget::linkSource(QString source)
 	patternShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
 	patternShader.addShaderFromSourceCode (QGLShader::Fragment, texturepassthrough);
 	patternShader.link();
+	return result;
 }
 
 void RenderWidget::setSourceShader(QString source)
 {
 	patternSource = source;
 	patternDirty = true;
+	updateGL();
 }
 
-void RenderWidget::linkDistortion(QString source)
+bool RenderWidget::linkDistortion(QString source)
 {
+	bool result = true;
 	distortionShader.removeAllShaders();
 	if (!source.isEmpty())
 	{
 		distortionShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\barrel.geom");
 		distortionShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
-		distortionShader.addShaderFromSourceCode (QGLShader::Fragment, source);
-		if (distortionShader.link())
-			return;
+		if (distortionShader.addShaderFromSourceCode (QGLShader::Fragment, source) 
+			&& distortionShader.link())
+			return true;
 		else {
-			QMessageBox::information(0, "error", distortionShader.log());
+			errorBox(QString("Error compiling distortion shader"),distortionShader.log());
 //			qDebug() << distortionShader.log();
 			distortionShader.removeAllShaders();
+			result = false;
 		}
 	} 
 
@@ -295,27 +305,32 @@ void RenderWidget::linkDistortion(QString source)
 	distortionShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
 	distortionShader.addShaderFromSourceCode (QGLShader::Fragment, texturepassthrough);
 	distortionShader.link();
+	return result;
 }
 
 void RenderWidget::setDistortionShader(QString source)
 {
 	distortionSource = source;
 	distortionDirty = true;
+	updateGL();
 }
 
-void RenderWidget::linkScreen(QString source)
+bool RenderWidget::linkScreen(QString source)
 {
+	bool result = true;
 	screenShader.removeAllShaders();
 	if (!source.isEmpty())
 	{
 		screenShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
 		screenShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
-		screenShader.addShaderFromSourceCode (QGLShader::Fragment, source);
-		if (screenShader.link())
-			return;
+		
+		if (screenShader.addShaderFromSourceCode (QGLShader::Fragment, source)
+			&& screenShader.link())
+			return true;
 		else {
-			QMessageBox::information(0, "error", screenShader.log());
+			errorBox(QString("Error compiling screen shader"),screenShader.log());
 			screenShader.removeAllShaders();
+			result = false;
 		}
 	} 
 
@@ -323,13 +338,14 @@ void RenderWidget::linkScreen(QString source)
 	screenShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
 	screenShader.addShaderFromSourceCode (QGLShader::Fragment, texturepassthrough);
 	screenShader.link();
-
+	return result;
 }
 
 void RenderWidget::setScreenShader(QString source)
 {	
 	screenSource = source;
 	screenDirty = true;	
+	updateGL();
 }
 void RenderWidget::setTextureFilter(unsigned int filter_mode)
 {
@@ -337,7 +353,7 @@ void RenderWidget::setTextureFilter(unsigned int filter_mode)
 		filterMode = filter_mode;
 
 	distortionDirty = true;
-
+	updateGL();
 }
 
 QImage RenderWidget::saveScreenShot(void)
@@ -357,16 +373,19 @@ void RenderWidget::setScreenResolution(QSize resolution)
 	distortionDirty = true;
 	screenDirty = true;
 	doneCurrent();
+	updateGL();
 }
 
 void RenderWidget::setRiftConfig(rift_t config)
 {
 	riftConfig = config;
 	setScreenResolution(QSize(riftConfig.h_resolution,riftConfig.v_resolution));
+	updateGL();
 }
 
 void RenderWidget::setSourceTexture(QImage texture)
 {
 	sourceTexture = texture;
 	patternDirty = true;
+	updateGL();
 }

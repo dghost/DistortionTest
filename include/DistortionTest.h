@@ -24,34 +24,47 @@ protected:
 	RenderWidget *glwidget;
 private:
 	Ui::DistortionTestClass ui;
-	QActionGroup *distortionGroup;
 	QActionGroup *filteringGroup;
-	QActionGroup *patternGroup;
-	QActionGroup *textureGroup;
 	QActionGroup *hmdGroup;
-	QMap<QString, QAction *> distortionMenuActions;
-	QMap<QString, QAction *> sourceMenuActions;
-	QMap<QString, QAction *> textureMenuActions;
 
-	QFileSystemWatcher currentShaders;
+	QFileSystemWatcher currentFiles;
 	QFileSystemWatcher directoryWatcher;
+
+	QActionGroup *distortionGroup;
+	QMap<QString, QAction *> distortionMenuActions;
 	QString distortionPath;
+	QString currentDistortionShader;
+
+	QActionGroup *patternGroup;
+	QMap<QString, QAction *> sourceMenuActions;
 	QString sourceShaderPath;
+	QString currentSourceShader;
+
+	QActionGroup *textureGroup;
+	QMap<QString, QAction *> textureMenuActions;
 	QString sourceTexturePath;
+	QString currentSourceTexture;
 
 	public slots:
 		void about();
-		void triggeredDistortion(QAction *action);
-		void triggeredFiltering(QAction *action);
-		void triggeredPattern(QAction *action);
-		void triggeredHMD(QAction *action);
-		void triggeredTexture(QAction *action);
 		void saveScreenShot();
-		void enumerateDistortionMenu();
-		void enumerateSourceMenu();
-		void enumerateTextureMenu();
-		void handleDirectoryChange(QString path);
+		void triggeredFiltering(QAction *action);
+		void triggeredHMD(QAction *action);
 
+		void setDistortionShader(QString filePath);
+		void triggeredDistortion(QAction *action);
+		void enumerateDistortionMenu();
+
+		void setSourceTexture(QString filePath);
+		void triggeredTexture(QAction *action);
+		void enumerateTextureMenu();
+
+		void setSourceShader(QString filePath);
+		void triggeredPattern(QAction *action);
+		void enumerateSourceMenu();
+
+		void handleDirectoryChange(QString path);
+		void handleFileChange(QString path);
 signals:
 		void changeTextureFilter(unsigned int newMode);
 		void changeSourceShader(QString shader);

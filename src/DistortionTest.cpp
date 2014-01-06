@@ -35,7 +35,6 @@ DistortionTest::DistortionTest(QWidget *parent)
 	/* set up shader selection menu */
 	distortionGroup = new QActionGroup(this);
 	distortionGroup->addAction(ui.actionNone);
-
 	connect(distortionGroup,SIGNAL(triggered(QAction*)),this,SLOT(triggeredDistortion(QAction*)));
 
 	ui.actionNone->setCheckable(true);
@@ -89,6 +88,7 @@ DistortionTest::DistortionTest(QWidget *parent)
 	directoryWatcher.addPath(sourceShaderPath);
 	directoryWatcher.addPath(sourceTexturePath);
 
+	connect(&currentFiles,SIGNAL(fileChanged(QString)),this,SLOT(handleFileChange(QString)));
 }
 
 DistortionTest::~DistortionTest()
@@ -101,7 +101,7 @@ DistortionTest::~DistortionTest()
 
 void DistortionTest::about()
 {
-	QMessageBox msgBox;
+	QMessageBox msgBox(this);
 	msgBox.setWindowTitle("About");
 	msgBox.setTextFormat(Qt::RichText);
 	msgBox.setText("Oculus Rift Distortion Test<br>Version 0.3<br><br>Luke Groeninger<br><a href='http://dghost.net'>http://dghost.net</a>");
@@ -110,17 +110,13 @@ void DistortionTest::about()
 	int ret = msgBox.exec();
 }
 
-void DistortionTest::triggeredDistortion(QAction *action)
+void DistortionTest::setDistortionShader(QString filePath)
 {
-	if (action == ui.actionNone)
+	QString shader;
+	QString oldPath = currentDistortionShader;
+
+	if (filePath != "")
 	{
-		emit changeDistortionShader(QString(""));
-	} else 
-	{
-		QString shader;
-		QString filePath(distortionPath);
-		filePath.append(action->text());
-		filePath.append(".frag");
 		QFile file(filePath);
 		if(!file.open(QIODevice::ReadOnly)) {
 			//QMessageBox::information(0, "error", file.errorString());
@@ -135,10 +131,35 @@ void DistortionTest::triggeredDistortion(QAction *action)
 			}
 			file.close();
 		}
-		//		QMessageBox::information(0, "info", shader);
-		emit changeDistortionShader(shader);
+	}
+	//		QMessageBox::information(0, "info", shader);
+	currentDistortionShader = filePath;
+
+	if (currentDistortionShader != oldPath)
+	{
+		if (oldPath != "")
+			currentFiles.removePath(oldPath);
+		if (currentDistortionShader != "")
+			currentFiles.addPath(currentDistortionShader);
+	}
+
+	emit changeDistortionShader(shader);
+}
+
+void DistortionTest::triggeredDistortion(QAction *action)
+{
+	if (action == ui.actionNone)
+	{
+		setDistortionShader("");		
+	} else 
+	{
+		QString filePath(distortionPath);
+		filePath.append(action->text());
+		filePath.append(".frag");
+		setDistortionShader(filePath);
 	}
 }
+
 
 void DistortionTest::triggeredFiltering(QAction *action)
 {
@@ -151,17 +172,14 @@ void DistortionTest::triggeredFiltering(QAction *action)
 	}
 }
 
-void DistortionTest::triggeredPattern(QAction *action)
+
+void DistortionTest::setSourceShader(QString filePath)
 {
-	if (action == ui.actionSourceNone)
+	QString shader;
+	QString oldPath = currentSourceShader;
+
+	if (filePath != "")
 	{
-		emit changeSourceShader(QString(""));
-	} else 
-	{
-		QString shader;
-		QString filePath(sourceShaderPath);
-		filePath.append(action->text());
-		filePath.append(".frag");
 		QFile file(filePath);
 		if(!file.open(QIODevice::ReadOnly)) {
 			//QMessageBox::information(0, "error", file.errorString());
@@ -176,23 +194,69 @@ void DistortionTest::triggeredPattern(QAction *action)
 			}
 			file.close();
 		}
-		//		QMessageBox::information(0, "info", shader);
-		emit changeSourceShader(shader);
+	}
+	//		QMessageBox::information(0, "info", shader);
+
+	currentSourceShader = filePath;
+
+	if (currentSourceShader != oldPath)
+	{
+		if (oldPath != "")
+			currentFiles.removePath(oldPath);
+		if (currentSourceShader != "")
+			currentFiles.addPath(currentSourceShader);
+	}
+
+	emit changeSourceShader(shader);
+}
+
+void DistortionTest::triggeredPattern(QAction *action)
+{
+	if (action == ui.actionSourceNone)
+	{
+		setSourceShader("");
+	} else 
+	{
+		QString shader;
+		QString filePath(sourceShaderPath);
+		filePath.append(action->text());
+		filePath.append(".frag");
+		setSourceShader(filePath);
 	}
 }
+
+void DistortionTest::setSourceTexture(QString filePath)
+{
+	QImage file;
+	QString oldPath = currentSourceTexture;
+	if (filePath != "")
+		file.load(filePath);
+
+	currentSourceTexture = filePath;
+
+	if (currentSourceTexture != oldPath)
+	{
+		if (oldPath != "")
+			currentFiles.removePath(oldPath);
+		if (currentSourceTexture != "")
+			currentFiles.addPath(currentSourceTexture);
+	}
+
+	emit changeTexture(file);
+}
+
 
 void DistortionTest::triggeredTexture(QAction *action)
 {
 	if (action == ui.actionTextureNone)
 	{
-		emit changeTexture(QImage());
+		setSourceTexture("");
 	} else 
 	{
 		QString shader;
 		QString filePath("textures/");
 		filePath.append(action->text());
-		QImage file(filePath);
-		emit changeTexture(file);
+		setSourceTexture(filePath);
 	}
 }
 
@@ -257,7 +321,7 @@ void DistortionTest::enumerateDistortionMenu()
 	names.sort();
 
 	distortionGroup->blockSignals(true);
-	
+
 	foreach (QString name, names)
 	{
 		qDebug() << name;
@@ -310,7 +374,7 @@ void DistortionTest::enumerateSourceMenu()
 	names.sort();
 
 	patternGroup->blockSignals(true);
-	
+
 	foreach (QString name, names)
 	{
 		qDebug() << name;
@@ -365,9 +429,9 @@ void DistortionTest::enumerateTextureMenu()
 	}
 	names.sort();
 
-	
+
 	textureGroup->blockSignals(true);
-	
+
 	foreach (QString name, names)
 	{
 		qDebug() << name;
@@ -410,3 +474,15 @@ void DistortionTest::handleDirectoryChange(QString path)
 	else if (path == sourceTexturePath)
 		enumerateTextureMenu();
 }
+
+void DistortionTest::handleFileChange(QString path)
+{
+	qDebug() << "File changed: " << path;
+	if (path==currentDistortionShader)
+		setDistortionShader(path);
+	else if (path==currentSourceShader)
+		setSourceShader(path);
+	else if (path==currentSourceTexture)
+		setSourceTexture(path);
+}
+
