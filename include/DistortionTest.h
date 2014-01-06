@@ -8,6 +8,10 @@
 #include "ui_distortiontest.h"
 #include "RenderWidget.h"
 
+#define DIRECTORY_SHADER_SOURCE "shaders/source/"
+#define DIRECTORY_TEXTURE_SOURCE "textures/"
+#define DIRECTORY_SHADER_DISTORTION "shaders/distortion/"
+
 class DistortionTest : public QMainWindow
 {
 	Q_OBJECT
@@ -25,12 +29,15 @@ private:
 	QActionGroup *patternGroup;
 	QActionGroup *textureGroup;
 	QActionGroup *hmdGroup;
-	QList<QAction *> distortionMenuActions;
-	QList<QAction *> sourceMenuActions;
-	QList<QAction *> textureMenuActions;
-	QFileSystemWatcher distortionDirectory;
-	QFileSystemWatcher sourceDirectory;
-	QFileSystemWatcher textureDirectory;
+	QMap<QString, QAction *> distortionMenuActions;
+	QMap<QString, QAction *> sourceMenuActions;
+	QMap<QString, QAction *> textureMenuActions;
+
+	QFileSystemWatcher currentShaders;
+	QFileSystemWatcher directoryWatcher;
+	QString distortionPath;
+	QString sourceShaderPath;
+	QString sourceTexturePath;
 
 	public slots:
 		void about();
@@ -40,9 +47,10 @@ private:
 		void triggeredHMD(QAction *action);
 		void triggeredTexture(QAction *action);
 		void saveScreenShot();
-		void enumerateDistortionMenu(QString path);
-		void enumerateSourceMenu(QString path);
-		void enumerateTextureMenu(QString path);
+		void enumerateDistortionMenu();
+		void enumerateSourceMenu();
+		void enumerateTextureMenu();
+		void handleDirectoryChange(QString path);
 
 signals:
 		void changeTextureFilter(unsigned int newMode);

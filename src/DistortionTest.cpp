@@ -10,6 +10,10 @@ DistortionTest::DistortionTest(QWidget *parent)
 {
 	ui.setupUi(this);
 
+	distortionPath = DIRECTORY_SHADER_DISTORTION;
+	sourceShaderPath = DIRECTORY_SHADER_SOURCE;
+	sourceTexturePath = DIRECTORY_TEXTURE_SOURCE;
+
 	glwidget = new RenderWidget(this);
 	glwidget->setFixedSize(1280,800);
 
@@ -75,18 +79,15 @@ DistortionTest::DistortionTest(QWidget *parent)
 	//	QImage temp("textures/quake2-10.png");
 	//	glwidget->setSourceTexture(temp);
 
-	enumerateDistortionMenu("shaders/distortion");
-	connect(&distortionDirectory,SIGNAL(directoryChanged(QString)),this,SLOT(enumerateDistortionMenu(QString)));
-	distortionDirectory.addPath("shaders/distortion");
+	enumerateDistortionMenu();
+	enumerateSourceMenu();
+	enumerateTextureMenu();
 
-	enumerateSourceMenu("shaders/pattern");
-	connect(&sourceDirectory,SIGNAL(directoryChanged(QString)),this,SLOT(enumerateSourceMenu(QString)));
-	sourceDirectory.addPath("shaders/pattern");
+	connect(&directoryWatcher,SIGNAL(directoryChanged(QString)),this,SLOT(handleDirectoryChange(QString)));
 
-
-	enumerateTextureMenu("textures/");
-	connect(&textureDirectory,SIGNAL(directoryChanged(QString)),this,SLOT(enumerateTextureMenu(QString)));
-	textureDirectory.addPath("textures/");
+	directoryWatcher.addPath(distortionPath);
+	directoryWatcher.addPath(sourceShaderPath);
+	directoryWatcher.addPath(sourceTexturePath);
 
 }
 
@@ -117,7 +118,7 @@ void DistortionTest::triggeredDistortion(QAction *action)
 	} else 
 	{
 		QString shader;
-		QString filePath("shaders/distortion/");
+		QString filePath(distortionPath);
 		filePath.append(action->text());
 		filePath.append(".frag");
 		QFile file(filePath);
@@ -158,7 +159,7 @@ void DistortionTest::triggeredPattern(QAction *action)
 	} else 
 	{
 		QString shader;
-		QString filePath("shaders/pattern/");
+		QString filePath(sourceShaderPath);
 		filePath.append(action->text());
 		filePath.append(".frag");
 		QFile file(filePath);
@@ -237,20 +238,9 @@ void DistortionTest::triggeredHMD(QAction *action)
 	}
 }
 
-void DistortionTest::enumerateDistortionMenu(QString path)
+void DistortionTest::enumerateDistortionMenu()
 {
-	ui.actionNone->trigger();
-
-	foreach(QAction *action,distortionMenuActions)
-	{
-		distortionMenuActions.removeOne(action);
-		ui.menuDistortionShader->removeAction(action);
-		distortionGroup->removeAction(action);
-		delete action;
-	}
-
-
-	QDir directory(path);
+	QDir directory(distortionPath);
 	if (!directory.exists())
 	{
 		qDebug() << "No such path";
@@ -265,31 +255,45 @@ void DistortionTest::enumerateDistortionMenu(QString path)
 		names.append(file.baseName());
 	}
 	names.sort();
+
+	distortionGroup->blockSignals(true);
+	
 	foreach (QString name, names)
 	{
 		qDebug() << name;
-		QAction *temp = new QAction(name,ui.menuDistortionShader);
-		temp->setCheckable(true);
-		ui.menuDistortionShader->addAction(temp);
-		distortionGroup->addAction(temp);
-		distortionMenuActions.append(temp);
+		if (!distortionMenuActions.contains(name))
+		{
+			QAction *temp = new QAction(name,distortionGroup);
+			temp->setCheckable(true);
+			distortionMenuActions[name] = temp;
+		}
 	}
+
+	QAction *currentAction = distortionGroup->checkedAction();
+	foreach(QString key, distortionMenuActions.keys())
+	{
+		if (!names.contains(key))
+		{
+			QAction *temp = distortionMenuActions[key];
+			if (distortionGroup->checkedAction() == temp)
+				currentAction = ui.actionNone;
+			distortionMenuActions.remove(key);
+			distortionGroup->removeAction(temp);
+			delete temp;
+		}
+	}
+	ui.menuDistortionShader->clear();
+	ui.menuDistortionShader->addAction(ui.actionNone);
+	ui.menuDistortionShader->addActions(distortionMenuActions.values());
+	distortionGroup->blockSignals(false);
+	if (currentAction == ui.actionNone)
+		currentAction->trigger();
 }
 
 
-void DistortionTest::enumerateSourceMenu(QString path)
+void DistortionTest::enumerateSourceMenu()
 {
-	ui.actionSourceNone->trigger();
-	foreach(QAction *action,sourceMenuActions)
-	{
-		sourceMenuActions.removeOne(action);
-		ui.menuSourceShader->removeAction(action);
-		patternGroup->removeAction(action);
-		delete action;
-	}
-
-
-	QDir directory(path);
+	QDir directory(sourceShaderPath);
 	if (!directory.exists())
 	{
 		qDebug() << "No such path";
@@ -304,31 +308,44 @@ void DistortionTest::enumerateSourceMenu(QString path)
 		names.append(file.baseName());
 	}
 	names.sort();
+
+	patternGroup->blockSignals(true);
+	
 	foreach (QString name, names)
 	{
 		qDebug() << name;
-		QAction *temp = new QAction(name,ui.menuSourceShader);
-		temp->setCheckable(true);
-		ui.menuSourceShader->addAction(temp);
-		patternGroup->addAction(temp);
-		sourceMenuActions.append(temp);
+		if (!sourceMenuActions.contains(name))
+		{
+			QAction *temp = new QAction(name,patternGroup);
+			temp->setCheckable(true);
+			sourceMenuActions[name] = temp;
+		}
 	}
+
+	QAction *currentAction = patternGroup->checkedAction();
+	foreach(QString key, sourceMenuActions.keys())
+	{
+		if (!names.contains(key))
+		{
+			QAction *temp = sourceMenuActions[key];
+			if (patternGroup->checkedAction() == temp)
+				currentAction = ui.actionSourceNone;
+			sourceMenuActions.remove(key);
+			patternGroup->removeAction(temp);
+			delete temp;
+		}
+	}
+	ui.menuSourceShader->clear();
+	ui.menuSourceShader->addAction(ui.actionSourceNone);
+	ui.menuSourceShader->addActions(sourceMenuActions.values());
+	patternGroup->blockSignals(false);
+	if (currentAction == ui.actionSourceNone)
+		currentAction->trigger();
 }
 
-void DistortionTest::enumerateTextureMenu(QString path)
+void DistortionTest::enumerateTextureMenu()
 {
-	ui.actionTextureNone->trigger();
-
-	foreach(QAction *action,textureMenuActions)
-	{
-		textureMenuActions.removeOne(action);
-		ui.menuTexture->removeAction(action);
-		textureGroup->removeAction(action);
-		delete action;
-	}
-
-
-	QDir directory(path);
+	QDir directory(sourceTexturePath);
 	if (!directory.exists())
 	{
 		qDebug() << "No such path";
@@ -347,13 +364,49 @@ void DistortionTest::enumerateTextureMenu(QString path)
 		names.append(file.fileName());
 	}
 	names.sort();
+
+	
+	textureGroup->blockSignals(true);
+	
 	foreach (QString name, names)
 	{
 		qDebug() << name;
-		QAction *temp = new QAction(name,ui.menuTexture);
-		temp->setCheckable(true);
-		ui.menuTexture->addAction(temp);
-		textureGroup->addAction(temp);
-		textureMenuActions.append(temp);
+		if (!textureMenuActions.contains(name))
+		{
+			QAction *temp = new QAction(name,textureGroup);
+			temp->setCheckable(true);
+			textureMenuActions[name] = temp;
+		}
 	}
+
+	QAction *currentAction = textureGroup->checkedAction();
+	foreach(QString key, textureMenuActions.keys())
+	{
+		if (!names.contains(key))
+		{
+			QAction *temp = textureMenuActions[key];
+			if (textureGroup->checkedAction() == temp)
+				currentAction = ui.actionTextureNone;
+			textureMenuActions.remove(key);
+			textureGroup->removeAction(temp);
+			delete temp;
+		}
+	}
+	ui.menuTexture->clear();
+	ui.menuTexture->addAction(ui.actionTextureNone);
+	ui.menuTexture->addActions(textureMenuActions.values());
+	textureGroup->blockSignals(false);
+	if (currentAction == ui.actionTextureNone)
+		currentAction->trigger();
+}
+
+
+void DistortionTest::handleDirectoryChange(QString path)
+{
+	if (path == distortionPath)
+		enumerateDistortionMenu();
+	else if (path == sourceShaderPath)
+		enumerateSourceMenu();
+	else if (path == sourceTexturePath)
+		enumerateTextureMenu();
 }
