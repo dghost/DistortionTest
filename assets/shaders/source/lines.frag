@@ -6,14 +6,14 @@ uniform vec4 ColorBase = vec4(vec3(0.0),1.0);
 uniform vec4 ColorX = vec4(1.0,0.0,0.0,0.0);
 uniform vec4 ColorY = vec4(0.0,0.0,1.0,0.0);
 uniform float Size = 1;
-in vec2 texCoords;
+in vec2 TexCoords;
 
 out vec4 outColor;
 
 void main(void)
 {
 	// calculate line spacing
-    vec2 warpTexCoords = texCoords * ScreenSize;
+    vec2 warpTexCoords = TexCoords * ScreenSize;
 	ivec2 color = ivec2(warpTexCoords) % ivec2(1 + Size);
 
 	// add lines together

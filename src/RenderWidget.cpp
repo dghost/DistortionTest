@@ -1,16 +1,84 @@
 #include "RenderWidget.h"
 
 
-char emptyshader[] = "#version 150\n"
+char emptyshader[] = 
+	"#version 150\n"
 	"void main() {}\n";
 
-char texturepassthrough[] = "#version 150\n"
-"uniform sampler2D Texture;\n"
-"in vec2 texCoords;\n"
-"out vec4 outColor;\n"
-"void main(void)\n"
+char texturepassthrough[] = 
+	"#version 150\n"
+	"uniform sampler2D Texture;\n"
+	"in vec2 TexCoords;\n"
+	"out vec4 outColor;\n"
+	"void main(void)\n"
+	"{\n"
+	"	outColor =  texture(Texture,TexCoords);\n"
+	"}\n";
+
+char quad[] = 
+	"#version 150\n"
+	"layout(points) in;\n"
+	"layout(triangle_strip, max_vertices = 4) out;\n"
+	"out vec2 TexCoords;\n"
+	"uniform vec2 lowerLeft = vec2(0.0,0.0);\n"
+	"uniform vec2 upperRight = vec2(1.0,1.0);\n"
+	"void main()\n"
+	"{\n"
+	"	gl_Position = vec4( 1.0, 1.0, 0.0, 1.0 );\n"
+	"	TexCoords = vec2( upperRight.x, upperRight.y );\n"
+	"	EmitVertex();\n"
+	"	gl_Position = vec4(-1.0, 1.0, 0.0, 1.0 );\n"
+	"	TexCoords = vec2( lowerLeft.x, upperRight.y );\n"
+	"	EmitVertex();\n"
+	"	gl_Position = vec4( 1.0,-1.0, 0.0, 1.0 );\n"
+	"	TexCoords = vec2( upperRight.x, lowerLeft.y );\n"
+	"	EmitVertex();\n"
+	"	gl_Position = vec4(-1.0,-1.0, 0.0, 1.0 );\n"
+	"	TexCoords = vec2( lowerLeft.x, lowerLeft.y );\n"
+	"	EmitVertex();\n"
+	"	EndPrimitive();\n"
+	"}\n";
+
+char barrel[] =
+	"#version 150\n"
+"layout(points) in;\n"
+"layout(triangle_strip, max_vertices = 8) out;\n"
+"out vec2 TexCoords;\n"
+"invariant out vec2 ScreenCenter;\n"
+"invariant out vec2 LensCenter;\n"
+"uniform float DistortionOffset = 0.151976;\n"
+"void main()\n"
 "{\n"
-"	outColor =  texture(Texture,texCoords);\n"
+"	ScreenCenter = vec2(0.25,0.5);\n"
+"	LensCenter = vec2(0.25 + DistortionOffset * 0.25, 0.5);\n"
+"	gl_Position = vec4( 0.0, 1.0, 0.0, 1.0 );\n"
+"	TexCoords = vec2( 0.5, 1.0);\n"
+"	EmitVertex();\n"
+"	gl_Position = vec4(-1.0, 1.0, 0.0, 1.0 );\n"
+"	TexCoords = vec2( 0.0, 1.0 );\n"
+"	EmitVertex();\n"
+"	gl_Position = vec4( 0.0,-1.0, 0.0, 1.0 );\n"
+"	TexCoords = vec2( 0.5, 0.0 );\n"
+"	EmitVertex();\n"
+"	gl_Position = vec4(-1.0,-1.0, 0.0, 1.0 );\n"
+"	TexCoords = vec2( 0.0, 0.0 );\n"
+"	EmitVertex();\n"
+"	EndPrimitive();\n"
+"	ScreenCenter = vec2(0.75,0.5);\n"
+"	LensCenter = vec2(0.75 - DistortionOffset * 0.25, 0.5);\n"
+"	gl_Position = vec4( 1.0, 1.0, 0.0, 1.0 );\n"
+"	TexCoords = vec2( 1.0, 1.0 );\n"
+"	EmitVertex();\n"
+"	gl_Position = vec4(0.0, 1.0, 0.0, 1.0 );\n"
+"	TexCoords = vec2( 0.5, 1.0 );\n"
+"	EmitVertex();\n"
+"	gl_Position = vec4( 1.0,-1.0, 0.0, 1.0 );\n"
+"	TexCoords = vec2( 1.0, 0.0 );\n"
+"	EmitVertex();\n"
+"	gl_Position = vec4(0.0,-1.0, 0.0, 1.0 );\n"
+"	TexCoords = vec2( 0.5, 0.0 );\n"
+"	EmitVertex();\n"
+"	EndPrimitive();\n"
 "}\n";
 
 RenderWidget::RenderWidget(QWidget *parent)
@@ -44,6 +112,7 @@ RenderWidget::RenderWidget(QWidget *parent)
 
 RenderWidget::~RenderWidget()
 {
+	closeErrorBox(0);
 	if (screenBuffer)
 		delete screenBuffer;
 	if (distortionBuffer)
@@ -256,7 +325,7 @@ bool RenderWidget::linkSource(QString source)
 	patternShader.removeAllShaders();
 	if (!source.isEmpty())
 	{
-		patternShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
+		patternShader.addShaderFromSourceCode (QGLShader::Geometry,quad);
 		patternShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
 		if (patternShader.addShaderFromSourceCode (QGLShader::Fragment, source) 
 			&& patternShader.link())
@@ -268,7 +337,7 @@ bool RenderWidget::linkSource(QString source)
 		}
 	} 
 
-	patternShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
+	patternShader.addShaderFromSourceCode (QGLShader::Geometry,quad);
 	patternShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
 	patternShader.addShaderFromSourceCode (QGLShader::Fragment, texturepassthrough);
 	patternShader.link();
@@ -288,7 +357,7 @@ bool RenderWidget::linkDistortion(QString source)
 	distortionShader.removeAllShaders();
 	if (!source.isEmpty())
 	{
-		distortionShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\barrel.geom");
+		distortionShader.addShaderFromSourceCode (QGLShader::Geometry,barrel);
 		distortionShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
 		if (distortionShader.addShaderFromSourceCode (QGLShader::Fragment, source) 
 			&& distortionShader.link())
@@ -301,7 +370,7 @@ bool RenderWidget::linkDistortion(QString source)
 		}
 	} 
 
-	distortionShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
+	distortionShader.addShaderFromSourceCode (QGLShader::Geometry,quad);
 	distortionShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
 	distortionShader.addShaderFromSourceCode (QGLShader::Fragment, texturepassthrough);
 	distortionShader.link();
@@ -321,7 +390,7 @@ bool RenderWidget::linkScreen(QString source)
 	screenShader.removeAllShaders();
 	if (!source.isEmpty())
 	{
-		screenShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
+		screenShader.addShaderFromSourceCode (QGLShader::Geometry,quad);
 		screenShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
 		
 		if (screenShader.addShaderFromSourceCode (QGLShader::Fragment, source)
@@ -334,7 +403,7 @@ bool RenderWidget::linkScreen(QString source)
 		}
 	} 
 
-	screenShader.addShaderFromSourceFile (QGLShader::Geometry,"shaders\\quad_full.geom");
+	screenShader.addShaderFromSourceCode (QGLShader::Geometry,quad);
 	screenShader.addShaderFromSourceCode (QGLShader::Vertex,emptyshader);
 	screenShader.addShaderFromSourceCode (QGLShader::Fragment, texturepassthrough);
 	screenShader.link();
