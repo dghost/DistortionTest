@@ -221,11 +221,11 @@ void RenderWidget::drawBackBuffer()
 		glClear(GL_COLOR_BUFFER_BIT);
 		patternShader.bind();
 		patternShader.setUniformValue("ScreenSize", screenResolution);
+		patternShader.setUniformValue("TextureSize",sourceTexture.size());
 
 		if (!sourceTexture.isNull())
 		{
 			bindTexture(sourceTexture);
-			patternShader.setUniformValue("TextureSize",sourceTexture.size());
 		}
 
 		glDrawArrays(GL_POINTS, 0, 1);
@@ -258,6 +258,8 @@ void RenderWidget::drawDistortion()
 		distortionShader.setUniformValue("ScaleIn",4.0, 2.0/aspect);
 		distortionShader.setUniformValue("Scale",0.25, 0.5 * aspect);
 		distortionShader.setUniformValue("TextureSize",backBuffer->size());
+		distortionShader.setUniformValue("ScreenSize", screenResolution);
+
 		glDrawArrays(GL_POINTS, 0, 1);
 		glBindTexture(GL_TEXTURE_2D,0);
 		distortionShader.release();
@@ -271,6 +273,8 @@ void RenderWidget::drawScreen()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBindTexture(GL_TEXTURE_2D,distortionBuffer->texture());
 		screenShader.bind();
+		screenShader.setUniformValue("TextureSize",distortionBuffer->size());
+		screenShader.setUniformValue("ScreenSize", screenResolution);
 
 		glDrawArrays(GL_POINTS, 0, 1);
 		glBindTexture(GL_TEXTURE_2D,0);
